@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugSplat", "BugSplat\BugSplat.csproj", "{6D7324E0-FE54-428C-A23E-B4E610142F73}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BugSplat.Test", "BugSplat.Test\BugSplat.Test.csproj", "{E635315F-5294-4D85-A826-233F9A0F4411}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{6D7324E0-FE54-428C-A23E-B4E610142F73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D7324E0-FE54-428C-A23E-B4E610142F73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D7324E0-FE54-428C-A23E-B4E610142F73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E635315F-5294-4D85-A826-233F9A0F4411}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E635315F-5294-4D85-A826-233F9A0F4411}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E635315F-5294-4D85-A826-233F9A0F4411}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E635315F-5294-4D85-A826-233F9A0F4411}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
