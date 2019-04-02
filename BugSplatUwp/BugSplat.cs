@@ -8,6 +8,8 @@ namespace BugSplatUwp
 {
     public class BugSplat
     {
+        private const string CRASH_TYPE_ID_UWP = "18";
+
         private readonly string _database;
         private readonly string _application;
         private readonly string _version;
@@ -29,13 +31,14 @@ namespace BugSplatUwp
                 var appVersion = _version;
                 var callstack = exception.ToString();
 
-                var uri = new Uri($"https://{database}.bugsplat.com/post/unity/");
+                var uri = new Uri($"https://{database}.bugsplat.com/post/uwp/");
                 var body = new MultipartFormDataContent
                 {
                     { new StringContent(database), "database" },
                     { new StringContent(appName), "appName" },
                     { new StringContent(appVersion), "appVersion" },
-                    { new StringContent(callstack), "callstack" }
+                    { new StringContent(callstack), "callstack" },
+                    { new StringContent(CRASH_TYPE_ID_UWP), "crashTypeId" }
                 };
 
                 for (var i = 0; i < _files.Count; i++)
