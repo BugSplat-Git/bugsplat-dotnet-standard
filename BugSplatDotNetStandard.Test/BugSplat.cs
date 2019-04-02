@@ -17,7 +17,7 @@ namespace Tests
             }
             catch (Exception ex)
             {
-                var sut = new BugSplatDotNetStandard.BugSplat("octomore", "MyUwpCrasherTest", "1.0.0.0");
+                var sut = new BugSplat("octomore", "MyUwpCrasherTest", "1.0.0.0");
 
                 var response = sut.Post(ex).Result;
                 var body = response.Content.ReadAsStringAsync().Result;

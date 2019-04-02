@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BugSplatUwp", "BugSplatUwp\BugSplatUwp.csproj", "{045F36D8-9EC4-47CE-9BBD-FB6FC188CB25}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BugSplatDotNetStandard", "BugSplatDotNetStandard\BugSplatDotNetStandard.csproj", "{045F36D8-9EC4-47CE-9BBD-FB6FC188CB25}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BugSplatUwp.Test", "BugSplatUwp.Test\BugSplatUwp.Test.csproj", "{31713548-DBAF-4058-B836-A658A3219DFC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BugSplatDotNetStandard.Test", "BugSplatDotNetStandard.Test\BugSplatDotNetStandard.Test.csproj", "{31713548-DBAF-4058-B836-A658A3219DFC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
