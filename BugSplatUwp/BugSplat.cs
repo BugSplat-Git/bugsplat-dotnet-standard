@@ -4,11 +4,11 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace BugSplatUwp
+namespace BugSplatDotNetStandard
 {
     public class BugSplat
     {
-        private const string CRASH_TYPE_ID_UWP = "18";
+        private const string CRASH_TYPE_ID_DOT_NET_STANDARD = "18";
 
         private readonly string _database;
         private readonly string _application;
@@ -22,23 +22,23 @@ namespace BugSplatUwp
             _version = version;
         }
 
-        public async Task<HttpResponseMessage> Post(Exception exception)
+        public async Task<HttpResponseMessage> Post(Exception ex)
         {
             using (var httpClient = new HttpClient())
             {
                 var database = _database;
                 var appName = _application;
                 var appVersion = _version;
-                var callstack = exception.ToString();
+                var callstack = ex.ToString();
 
-                var uri = new Uri($"https://{database}.bugsplat.com/post/uwp/");
+                var uri = new Uri($"https://{database}.bugsplat.com/post/dotnetstandard/");
                 var body = new MultipartFormDataContent
                 {
                     { new StringContent(database), "database" },
                     { new StringContent(appName), "appName" },
                     { new StringContent(appVersion), "appVersion" },
                     { new StringContent(callstack), "callstack" },
-                    { new StringContent(CRASH_TYPE_ID_UWP), "crashTypeId" }
+                    { new StringContent(CRASH_TYPE_ID_DOT_NET_STANDARD), "crashTypeId" }
                 };
 
                 for (var i = 0; i < _files.Count; i++)

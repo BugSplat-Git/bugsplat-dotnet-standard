@@ -1,4 +1,4 @@
-using BugSplatUwp;
+using BugSplatDotNetStandard;
 using NUnit.Framework;
 using System;
 using System.Net;
@@ -17,7 +17,7 @@ namespace Tests
             }
             catch (Exception ex)
             {
-                var sut = new BugSplat("octomore", "foo", "bar");
+                var sut = new BugSplatDotNetStandard.BugSplat("octomore", "MyUwpCrasherTest", "1.0.0.0");
 
                 var response = sut.Post(ex).Result;
                 var body = response.Content.ReadAsStringAsync().Result;
