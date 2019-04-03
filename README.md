@@ -8,7 +8,7 @@ BugSplatDotNetStandard allows you to capture and track exceptions on all platfor
 - [Register](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user.
 - [Log in](https://app.bugsplat.com/auth0/login) using your email address.
 
-You can also view the [MyUwpCrasher](todo) repo which contains a sample application with BugSplatDotNetStandard installed and configured to post crashes to BugSplat.
+You can also view the [MyUwpCrasher](https://github.com/BugSplat-Git/MyUwpCrasher) repo which contains a sample application with BugSplatDotNetStandard installed and configured to post crashes to BugSplat.
 
 ## Configuration
 
