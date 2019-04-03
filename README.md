@@ -62,12 +62,13 @@ catch (Exception ex)
 }
 ```
 
-Once you've generated an error, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have to correct database selected in the dropdown menu. You should see a new crash report under the 'Recent Crashes' section. Click the link in the ID column to see details about the crash:
+Once you've generated an error, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have to correct database selected in the dropdown menu. You should see a new crash report under the 'Recent Crashes' section:
 
-```
-// TODO BG image of the Dashboard page
-// TODO BG image of the IndividualCrash page
-```
+![alt text](https://s3.amazonaws.com/bugsplat-public/nuget/dashboard.png "BugSplat dashboard")
+
+ Click the link in the ID column to see details about the crash:
+
+![alt text](https://s3.amazonaws.com/bugsplat-public/nuget/individual_crash.png "BugSplat crash details")
 
 That’s it! Your application is now configured to post crash reports to BugSplat.
 
