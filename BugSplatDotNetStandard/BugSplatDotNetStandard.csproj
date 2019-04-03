@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Company>BugSplat</Company>
+    <Authors>Bobby Galli</Authors>
+    <Description>BugSplat crash reporting for .NET Standard 2.0 platforms. For .NET Framework 3.5+ crash reporting see https://www.bugsplat.com/docs/platforms/dot-net.</Description>
+    <Copyright>© 2019 BugSplat</Copyright>
+    <PackageProjectUrl>https://www.bugsplat.com</PackageProjectUrl>
+    <PackageTags>bugsplat crash reporting reporter unhandled exception error catch analytics debug debugging debugger stack trace line numbers net uwp core mono unity xamarin</PackageTags>
+    <AssemblyVersion>0.0.0.0</AssemblyVersion>
+    <FileVersion>0.0.0.0</FileVersion>
   </PropertyGroup>
 
 </Project>
