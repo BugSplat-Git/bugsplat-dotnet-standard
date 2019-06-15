@@ -35,7 +35,7 @@ this.UnhandledException += async (sender, args) =>
 };
 ```
 
-You can also configure BugSplat to upload log files at crash time. You can add as many files as you'd like, but the upload size limit is 2 MB for standard customers and 10 MB for Enterprize customers:
+You can also configure BugSplat to upload log files at crash time. You can add as many files as you'd like, but the upload size limit is 2 MB for standard customers and 10 MB for Enterprise customers:
 
 ```cs
 bugSplat.AttachFile(new FileInfo("/path/to/file.txt"));
