@@ -68,7 +68,7 @@ Once you've generated an error, navigate to the BugSplat [Dashboard](https://app
 
  Click the link in the ID column to see details about the crash:
 
-![alt text](https://s3.amazonaws.com/bugsplat-public/nuget/individual_crash.png "BugSplat crash details")
+![alt text](https://bugsplat-public.s3.amazonaws.com/DotNetStandard/dot-net-standard-crash.png "BugSplat crash details")
 
 That’s it! Your application is now configured to post crash reports to BugSplat.
 
