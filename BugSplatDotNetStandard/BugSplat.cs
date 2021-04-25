@@ -13,6 +13,11 @@ namespace BugSplatDotNetStandard
     public class BugSplat
     {
         /// <summary>
+        /// A list of files to be added to the upload at post time
+        /// </summary>
+        public List<FileInfo> Attachments { private get; set; } = new List<FileInfo>();
+
+        /// <summary>
         /// A default description added to the upload that can be overriden at post time
         /// </summary>
         public string Description { private get; set; } = string.Empty;
@@ -36,7 +41,6 @@ namespace BugSplatDotNetStandard
         private readonly string database;
         private readonly string application;
         private readonly string version;
-        private readonly List<FileInfo> files = new List<FileInfo>();
 
         /// <summary>
         /// Post Exceptions and minidump files to BugSplat
@@ -91,15 +95,6 @@ namespace BugSplatDotNetStandard
             }
         }
 
-        /// <summary>
-        /// Add additional files to be sent when Post is called
-        /// </summary>
-        /// <param name="fileInfo">The file that will be posted to BugSplat</param>
-        public void AttachFile(FileInfo fileInfo)
-        {
-            files.Add(fileInfo);
-        }
-
         private MultipartFormDataContent CreateMultiPartFormDataContent(BugSplatPostOptions options = null)
         {
             var additionalFormDataParams = options?.AdditionalFormDataParams ?? new List<KeyValuePair<string, HttpContent>>();
@@ -124,10 +119,15 @@ namespace BugSplatDotNetStandard
                 body.Add(param.Value, param.Key);
             }
 
-            for (var i = 0; i < files.Count; i++)
+            if (options != null)
             {
-                var name = files[i].Name;
-                var bytes = File.ReadAllBytes(files[i].FullName);
+                Attachments.AddRange(options.AdditionalAttachments);
+            }
+
+            for (var i = 0; i < Attachments.Count; i++)
+            {
+                var name = Attachments[i].Name;
+                var bytes = File.ReadAllBytes(Attachments[i].FullName);
                 var contents = Convert.ToBase64String(bytes);
                 body.Add(new StringContent(name), $"fileName{i + 1}");
                 body.Add(new StringContent(contents), $"optFile{i + 1}");
