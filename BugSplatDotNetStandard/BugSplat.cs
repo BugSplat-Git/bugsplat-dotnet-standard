@@ -15,27 +15,27 @@ namespace BugSplatDotNetStandard
         /// <summary>
         /// A list of files to be added to the upload at post time
         /// </summary>
-        public List<FileInfo> Attachments { private get; set; } = new List<FileInfo>();
+        public List<FileInfo> Attachments { get; } = new List<FileInfo>();
 
         /// <summary>
         /// A default description added to the upload that can be overriden at post time
         /// </summary>
-        public string Description { private get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
         /// <summary>
         /// A default email added to the upload that can be overriden at post time
         /// </summary>
-        public string Email { private get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
 
         /// <summary>
         /// A default key added to the upload that can be overriden at post time
         /// </summary>
-        public string Key { private get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
 
         /// <summary>
         /// A default user added to the upload that can be overriden at post time
         /// </summary>
-        public string User { private get; set; } = string.Empty;
+        public string User { get; set; } = string.Empty;
 
         private const string CRASH_TYPE_ID_DOT_NET_STANDARD = "18";
         private readonly string database;
