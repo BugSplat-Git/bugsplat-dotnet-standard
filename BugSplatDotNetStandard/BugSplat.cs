@@ -13,30 +13,34 @@ namespace BugSplatDotNetStandard
     public class BugSplat
     {
         /// <summary>
+        /// A list of files to be added to the upload at post time
+        /// </summary>
+        public List<FileInfo> Attachments { get; } = new List<FileInfo>();
+
+        /// <summary>
         /// A default description added to the upload that can be overriden at post time
         /// </summary>
-        public string Description { private get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
         /// <summary>
         /// A default email added to the upload that can be overriden at post time
         /// </summary>
-        public string Email { private get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
 
         /// <summary>
         /// A default key added to the upload that can be overriden at post time
         /// </summary>
-        public string Key { private get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
 
         /// <summary>
         /// A default user added to the upload that can be overriden at post time
         /// </summary>
-        public string User { private get; set; } = string.Empty;
+        public string User { get; set; } = string.Empty;
 
         private const string CRASH_TYPE_ID_DOT_NET_STANDARD = "18";
         private readonly string database;
         private readonly string application;
         private readonly string version;
-        private readonly List<FileInfo> files = new List<FileInfo>();
 
         /// <summary>
         /// Post Exceptions and minidump files to BugSplat
@@ -91,15 +95,6 @@ namespace BugSplatDotNetStandard
             }
         }
 
-        /// <summary>
-        /// Add additional files to be sent when Post is called
-        /// </summary>
-        /// <param name="fileInfo">The file that will be posted to BugSplat</param>
-        public void AttachFile(FileInfo fileInfo)
-        {
-            files.Add(fileInfo);
-        }
-
         private MultipartFormDataContent CreateMultiPartFormDataContent(BugSplatPostOptions options = null)
         {
             var additionalFormDataParams = options?.AdditionalFormDataParams ?? new List<KeyValuePair<string, HttpContent>>();
@@ -124,13 +119,30 @@ namespace BugSplatDotNetStandard
                 body.Add(param.Value, param.Key);
             }
 
-            for (var i = 0; i < files.Count; i++)
+            if (options != null)
             {
-                var name = files[i].Name;
-                var bytes = File.ReadAllBytes(files[i].FullName);
-                var contents = Convert.ToBase64String(bytes);
-                body.Add(new StringContent(name), $"fileName{i + 1}");
-                body.Add(new StringContent(contents), $"optFile{i + 1}");
+                Attachments.AddRange(options.AdditionalAttachments);
+            }
+
+            for (var i = 0; i < Attachments.Count; i++)
+            {
+                byte[] bytes = null;
+                using (var fileStream = File.Open(Attachments[i].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        fileStream.CopyTo(memoryStream);
+                        bytes = memoryStream.ToArray();
+                    }
+                }
+
+                if (bytes != null)
+                {
+                    var name = Attachments[i].Name;
+                    var contents = Convert.ToBase64String(bytes);
+                    body.Add(new StringContent(name), $"fileName{i + 1}");
+                    body.Add(new StringContent(contents), $"optFile{i + 1}");
+                }
             }
 
             return body;
