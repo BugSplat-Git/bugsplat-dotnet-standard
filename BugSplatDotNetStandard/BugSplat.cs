@@ -126,11 +126,23 @@ namespace BugSplatDotNetStandard
 
             for (var i = 0; i < Attachments.Count; i++)
             {
-                var name = Attachments[i].Name;
-                var bytes = File.ReadAllBytes(Attachments[i].FullName);
-                var contents = Convert.ToBase64String(bytes);
-                body.Add(new StringContent(name), $"fileName{i + 1}");
-                body.Add(new StringContent(contents), $"optFile{i + 1}");
+                byte[] bytes = null;
+                using (var fileStream = File.Open(Attachments[i].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        fileStream.CopyTo(memoryStream);
+                        bytes = memoryStream.ToArray();
+                    }
+                }
+
+                if (bytes != null)
+                {
+                    var name = Attachments[i].Name;
+                    var contents = Convert.ToBase64String(bytes);
+                    body.Add(new StringContent(name), $"fileName{i + 1}");
+                    body.Add(new StringContent(contents), $"optFile{i + 1}");
+                }
             }
 
             return body;
