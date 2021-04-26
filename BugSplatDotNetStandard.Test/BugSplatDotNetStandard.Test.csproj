@@ -16,4 +16,10 @@
     <ProjectReference Include="..\BugSplatDotNetStandard\BugSplatDotNetStandard.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="minidump.dmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
