@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 
@@ -14,7 +15,7 @@ namespace BugSplatDotNetStandard
         /// <summary>
         /// A list of form data key value pairs to be added to the post
         /// </summary>
-        public List<KeyValuePair<string, HttpContent>> AdditionalFormDataParams { get; } = new List<KeyValuePair<string, HttpContent>>();
+        public List<FormDataParam> AdditionalFormDataParams { get; } = new List<FormDataParam>();
         
         /// <summary>
         /// A description to be added to the post that overrides the corresponding default value
@@ -35,6 +36,23 @@ namespace BugSplatDotNetStandard
         /// An user to be added to the post that overrides the corresponding default value
         /// </summary>
         public string User { get; set; } = string.Empty;
+    }
 
+    public class FormDataParam
+    {
+        /// <summary>
+        /// Name to be added to MultipartFormDataContent
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Content to be added to MultipartFormDataContent
+        /// </summary>
+        public HttpContent Content { get; set; }
+
+        /// <summary>
+        /// Optional FileName to be added to MultipartFormDataContent if not null or empty
+        /// </summary>
+        public string FileName { get; set; } = string.Empty;
     }
 }
