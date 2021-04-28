@@ -17,6 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="attachment.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="minidump.dmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

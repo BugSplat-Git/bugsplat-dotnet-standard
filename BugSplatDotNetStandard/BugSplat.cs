@@ -139,9 +139,7 @@ namespace BugSplatDotNetStandard
                 if (bytes != null)
                 {
                     var name = Attachments[i].Name;
-                    var contents = Convert.ToBase64String(bytes);
-                    body.Add(new StringContent(name), $"fileName{i + 1}");
-                    body.Add(new StringContent(contents), $"optFile{i + 1}");
+                    body.Add(new ByteArrayContent(bytes), name, name);
                 }
             }
 
