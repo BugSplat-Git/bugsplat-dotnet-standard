@@ -97,7 +97,7 @@ namespace BugSplatDotNetStandard
 
         private MultipartFormDataContent CreateMultiPartFormDataContent(BugSplatPostOptions options = null)
         {
-            var additionalFormDataParams = options?.AdditionalFormDataParams ?? new List<KeyValuePair<string, HttpContent>>();
+            var additionalFormDataParams = options?.AdditionalFormDataParams ?? new List<FormDataParam>();
             var description = BugSplatUtils.GetStringValueOrDefault(options?.Description, Description);
             var email = BugSplatUtils.GetStringValueOrDefault(options?.Email, Email);
             var key = BugSplatUtils.GetStringValueOrDefault(options?.Key, Key);
@@ -116,7 +116,13 @@ namespace BugSplatDotNetStandard
 
             foreach (var param in additionalFormDataParams)
             {
-                body.Add(param.Value, param.Key);
+                if (!string.IsNullOrEmpty(param.FileName))
+                {
+                    body.Add(param.Content, param.Name, param.FileName);
+                    continue;
+                }
+
+                body.Add(param.Content, param.Name);
             }
 
             if (options != null)
@@ -139,9 +145,7 @@ namespace BugSplatDotNetStandard
                 if (bytes != null)
                 {
                     var name = Attachments[i].Name;
-                    var contents = Convert.ToBase64String(bytes);
-                    body.Add(new StringContent(name), $"fileName{i + 1}");
-                    body.Add(new StringContent(contents), $"optFile{i + 1}");
+                    body.Add(new ByteArrayContent(bytes), name, name);
                 }
             }
 

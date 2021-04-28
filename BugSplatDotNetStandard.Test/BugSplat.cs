@@ -27,6 +27,7 @@ namespace Tests
                     User = "Fred",
                     Key = "the key!"
                 };
+                options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
                 var response = sut.Post(ex, options).Result;
                 var body = response.Content.ReadAsStringAsync().Result;
 
@@ -40,7 +41,7 @@ namespace Tests
             var sut = new BugSplat("fred", "myConsoleCrasher", "2021.4.23.0");
 
             var minidumpFileInfo = new FileInfo("minidump.dmp");
-            // TODO BG backend support for these properties!
+            // TODO BG https://github.com/BugSplat-Git/webroot/issues/459
             var options = new BugSplatPostOptions()
             {
                 Description = "BugSplat rocks!",
@@ -48,6 +49,7 @@ namespace Tests
                 User = "Fred",
                 Key = "the key!"
             };
+            options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
             var response = sut.Post(minidumpFileInfo, options).Result;
             var body = response.Content.ReadAsStringAsync().Result;
 
