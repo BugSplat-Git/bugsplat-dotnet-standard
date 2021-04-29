@@ -18,7 +18,7 @@ namespace Tests
             }
             catch (Exception ex)
             {
-                var sut = new BugSplat("fred", "MyDotNetStandardCrasher", "1.0");
+                var sut = new BugSplat("octomore", "MyDotNetStandardCrasher", "1.0");
                 var options = new ExceptionPostOptions()
                 {
                     ExceptionType = BugSplat.ExceptionTypeId.Unity,

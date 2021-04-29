@@ -50,8 +50,8 @@ namespace BugSplatDotNetStandard
         public enum ExceptionTypeId
         {
             Unknown = 0,
-            Unity = 12,
-            DotNetStandard = 18
+            DotNetStandard = 18,
+            Unity = 24
         }
 
         public enum MinidumpTypeId
