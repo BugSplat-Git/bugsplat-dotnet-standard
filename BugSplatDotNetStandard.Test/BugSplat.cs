@@ -19,9 +19,9 @@ namespace Tests
             catch (Exception ex)
             {
                 var sut = new BugSplat("fred", "MyDotNetStandardCrasher", "1.0");
-
-                var options = new BugSplatPostOptions()
+                var options = new ExceptionPostOptions()
                 {
+                    ExceptionType = BugSplat.ExceptionTypeId.DotNetStandard,
                     Description = "BugSplat rocks!",
                     Email = "fred@bugsplat.com",
                     User = "Fred",
@@ -39,11 +39,10 @@ namespace Tests
         public void BugSplat_PostMinidump_ShouldPostMinidumpToBugSplat()
         {
             var sut = new BugSplat("fred", "myConsoleCrasher", "2021.4.23.0");
-
             var minidumpFileInfo = new FileInfo("minidump.dmp");
-            // TODO BG https://github.com/BugSplat-Git/webroot/issues/459
-            var options = new BugSplatPostOptions()
+            var options = new MinidumpPostOptions()
             {
+                MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows,
                 Description = "BugSplat rocks!",
                 Email = "fred@bugsplat.com",
                 User = "Fred",
