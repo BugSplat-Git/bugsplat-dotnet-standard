@@ -90,7 +90,7 @@ namespace BugSplatDotNetStandard
                 var uri = new Uri($"https://{database}.bugsplat.com/post/dotnetstandard/");
                 var callstack = ex.ToString();
                 var body = CreateMultiPartFormDataContent(options);
-                var crashTypeId = options?.ExceptionType != null ? options.ExceptionType : ExceptionType;
+                var crashTypeId = options?.ExceptionType != ExceptionTypeId.Unknown ? options.ExceptionType : ExceptionType;
                 body.Add(new StringContent(callstack), "callstack");
                 body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
 
@@ -108,7 +108,7 @@ namespace BugSplatDotNetStandard
             using (var httpClient = new HttpClient())
             {
                 var uri = new Uri($"https://{database}.bugsplat.com/api/upload/manual/crash.php");
-                var crashTypeId = options?.MinidumpType != null ? options.MinidumpType : MinidumpType;
+                var crashTypeId = options?.MinidumpType != MinidumpTypeId.Unknown ? options.MinidumpType : MinidumpType;
                 var minidump = File.ReadAllBytes(minidumpFileInfo.FullName);
                 var body = CreateMultiPartFormDataContent(options);
                 body.Add(new ByteArrayContent(minidump), "minidump", "minidump.dmp");
