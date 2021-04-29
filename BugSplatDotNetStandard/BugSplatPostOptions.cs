@@ -11,7 +11,7 @@ namespace BugSplatDotNetStandard
         /// <summary>
         /// An exception type to be added to the post that overrides the corresponding default values
         /// </summary>
-        public ExceptionTypeId ExceptionType { get; set; }
+        public ExceptionTypeId ExceptionType { get; set; } = ExceptionTypeId.Unknown;
     }
 
     public class MinidumpPostOptions: BugSplatPostOptions
@@ -19,7 +19,7 @@ namespace BugSplatDotNetStandard
         /// <summary>
         /// A minidump type to be added to the post that overrides the corresponding default values
         /// </summary>
-        public MinidumpTypeId MinidumpType { get; set; }
+        public MinidumpTypeId MinidumpType { get; set; } = MinidumpTypeId.Unknown;
     }
 
     public abstract class BugSplatPostOptions

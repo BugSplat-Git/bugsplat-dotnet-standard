@@ -21,7 +21,7 @@ namespace Tests
                 var sut = new BugSplat("fred", "MyDotNetStandardCrasher", "1.0");
                 var options = new ExceptionPostOptions()
                 {
-                    ExceptionType = BugSplat.ExceptionTypeId.DotNetStandard,
+                    ExceptionType = BugSplat.ExceptionTypeId.Unity,
                     Description = "BugSplat rocks!",
                     Email = "fred@bugsplat.com",
                     User = "Fred",
@@ -40,9 +40,10 @@ namespace Tests
         {
             var sut = new BugSplat("fred", "myConsoleCrasher", "2021.4.23.0");
             var minidumpFileInfo = new FileInfo("minidump.dmp");
+            sut.MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows;
             var options = new MinidumpPostOptions()
             {
-                MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows,
+                //MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows,
                 Description = "BugSplat rocks!",
                 Email = "fred@bugsplat.com",
                 User = "Fred",
