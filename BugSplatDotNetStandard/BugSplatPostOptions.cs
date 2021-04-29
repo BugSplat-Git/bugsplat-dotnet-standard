@@ -2,10 +2,27 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using static BugSplatDotNetStandard.BugSplat;
 
 namespace BugSplatDotNetStandard
 {
-    public class BugSplatPostOptions
+    public class ExceptionPostOptions: BugSplatPostOptions
+    {
+        /// <summary>
+        /// An exception type to be added to the post that overrides the corresponding default values
+        /// </summary>
+        public ExceptionTypeId ExceptionType { get; set; }
+    }
+
+    public class MinidumpPostOptions: BugSplatPostOptions
+    {
+        /// <summary>
+        /// A minidump type to be added to the post that overrides the corresponding default values
+        /// </summary>
+        public MinidumpTypeId MinidumpType { get; set; }
+    }
+
+    public abstract class BugSplatPostOptions
     {
         /// <summary>
         /// A list of attachments to be added to the post
@@ -16,7 +33,7 @@ namespace BugSplatDotNetStandard
         /// A list of form data key value pairs to be added to the post
         /// </summary>
         public List<FormDataParam> AdditionalFormDataParams { get; } = new List<FormDataParam>();
-        
+
         /// <summary>
         /// A description to be added to the post that overrides the corresponding default value
         /// </summary>

@@ -18,6 +18,11 @@ namespace BugSplatDotNetStandard
         public List<FileInfo> Attachments { get; } = new List<FileInfo>();
 
         /// <summary>
+        /// An identifier that tells the BugSplat backend how to process uploaded exceptions
+        /// </summary>
+        public ExceptionTypeId ExceptionType { get; set; } = ExceptionTypeId.DotNetStandard;
+
+        /// <summary>
         /// A default description added to the upload that can be overriden at post time
         /// </summary>
         public string Description { get; set; } = string.Empty;
@@ -33,11 +38,29 @@ namespace BugSplatDotNetStandard
         public string Key { get; set; } = string.Empty;
 
         /// <summary>
+        /// An identifier that tells the BugSplat backend how to process uploaded minidumps
+        /// </summary>
+        public MinidumpTypeId MinidumpType { get; set; } = MinidumpTypeId.WindowsNative;
+
+        /// <summary>
         /// A default user added to the upload that can be overriden at post time
         /// </summary>
         public string User { get; set; } = string.Empty;
 
-        private const string CRASH_TYPE_ID_DOT_NET_STANDARD = "18";
+        public enum ExceptionTypeId
+        {
+            Unknown = 0,
+            Unity = 12,
+            DotNetStandard = 18
+        }
+
+        public enum MinidumpTypeId
+        {
+            Unknown = 0,
+            WindowsNative = 1,
+            UnityNativeWindows = 15
+        }
+
         private readonly string database;
         private readonly string application;
         private readonly string version;
@@ -60,18 +83,16 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="ex">The Exception that will be serialized and posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        public async Task<HttpResponseMessage> Post(Exception ex, BugSplatPostOptions options = null)
+        public async Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
         {
             using (var httpClient = new HttpClient())
             {
                 var uri = new Uri($"https://{database}.bugsplat.com/post/dotnetstandard/");
                 var callstack = ex.ToString();
                 var body = CreateMultiPartFormDataContent(options);
-                var description = BugSplatUtils.GetStringValueOrDefault(options?.Description, Description);
-                // TODO BG https://github.com/BugSplat-Git/webroot/issues/458
-                body.Add(new StringContent(description), "usercomments");
+                var crashTypeId = options?.ExceptionType != null ? options.ExceptionType : ExceptionType;
                 body.Add(new StringContent(callstack), "callstack");
-                body.Add(new StringContent(CRASH_TYPE_ID_DOT_NET_STANDARD), "crashTypeId");
+                body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
 
                 return await httpClient.PostAsync(uri, body);
             }
@@ -82,14 +103,16 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="ex">The minidump file that will be posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        public async Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, BugSplatPostOptions options = null)
+        public async Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, MinidumpPostOptions options = null)
         {
             using (var httpClient = new HttpClient())
             {
                 var uri = new Uri($"https://{database}.bugsplat.com/api/upload/manual/crash.php");
+                var crashTypeId = options?.MinidumpType != null ? options.MinidumpType : MinidumpType;
                 var minidump = File.ReadAllBytes(minidumpFileInfo.FullName);
                 var body = CreateMultiPartFormDataContent(options);
                 body.Add(new ByteArrayContent(minidump), "minidump", "minidump.dmp");
+                body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
 
                 return await httpClient.PostAsync(uri, body);
             }
@@ -111,8 +134,8 @@ namespace BugSplatDotNetStandard
                     { new StringContent(description), "description" },
                     { new StringContent(email), "email" },
                     { new StringContent(key), "appKey" },
-                    { new StringContent(user), "user" },
-                };
+                    { new StringContent(user), "user" }
+            };
 
             foreach (var param in additionalFormDataParams)
             {
