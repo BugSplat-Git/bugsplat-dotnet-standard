@@ -43,7 +43,6 @@ namespace Tests
             sut.MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows;
             var options = new MinidumpPostOptions()
             {
-                //MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows,
                 Description = "BugSplat rocks!",
                 Email = "fred@bugsplat.com",
                 User = "Fred",
