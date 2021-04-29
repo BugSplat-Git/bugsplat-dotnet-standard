@@ -6,15 +6,16 @@
     <Company>BugSplat</Company>
     <Authors>Bobby Galli</Authors>
     <Description>BugSplat crash reporting for .NET Standard 2.0 platforms. For .NET Framework 3.5+ crash reporting see https://www.bugsplat.com/docs/platforms/dot-net.</Description>
-    <Copyright>© 2019 BugSplat</Copyright>
+    <Copyright>© 2021 BugSplat</Copyright>
     <PackageProjectUrl>https://www.bugsplat.com</PackageProjectUrl>
     <PackageTags>bugsplat crash reporting reporter unhandled exception error catch analytics debug debugging debugger stack trace line numbers net uwp core mono unity xamarin</PackageTags>
-    <AssemblyVersion>1.0.1.1</AssemblyVersion>
-    <FileVersion>1.0.1.1</FileVersion>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
     <PackageIconUrl>https://s3.amazonaws.com/bugsplat-public/bugsplat-bug.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/BugSplat-Git/BugSplatDotNetStandard</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>1.0.1</Version>
+    <Version>2.0.0</Version>
+    <PackageReleaseNotes>Added support for uploading minidumps. Updated the public API surface to support various options.</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>
