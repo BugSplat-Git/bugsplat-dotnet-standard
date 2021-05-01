@@ -87,6 +87,8 @@ namespace BugSplatDotNetStandard
         {
             using (var httpClient = new HttpClient())
             {
+                options = options ?? new ExceptionPostOptions();
+
                 var uri = new Uri($"https://{database}.bugsplat.com/post/dotnetstandard/");
                 var callstack = ex.ToString();
                 var body = CreateMultiPartFormDataContent(options);
@@ -107,6 +109,8 @@ namespace BugSplatDotNetStandard
         {
             using (var httpClient = new HttpClient())
             {
+                options = options ?? new MinidumpPostOptions();
+
                 var uri = new Uri($"https://{database}.bugsplat.com/api/upload/manual/crash.php");
                 var crashTypeId = options?.MinidumpType != MinidumpTypeId.Unknown ? options.MinidumpType : MinidumpType;
                 var minidump = File.ReadAllBytes(minidumpFileInfo.FullName);
