@@ -19,9 +19,14 @@ namespace Tests
             catch (Exception ex)
             {
                 var sut = new BugSplat("fred", "MyDotNetStandardCrasher", "1.0");
+                sut.ExceptionType = BugSplat.ExceptionTypeId.Unity;
+                sut.Description = "Default description - overridden";
+                sut.Email = "default@bugsplat.com - overridden";
+                sut.User = "Default - overridden";
+                sut.Key = "Default - overridden";
                 var options = new ExceptionPostOptions()
                 {
-                    ExceptionType = BugSplat.ExceptionTypeId.Unity,
+                    ExceptionType = BugSplat.ExceptionTypeId.DotNetStandard,
                     Description = "BugSplat rocks!",
                     Email = "fred@bugsplat.com",
                     User = "Fred",
@@ -40,9 +45,14 @@ namespace Tests
         {
             var sut = new BugSplat("fred", "myConsoleCrasher", "2021.4.23.0");
             var minidumpFileInfo = new FileInfo("minidump.dmp");
-            sut.MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows;
+            sut.MinidumpType = BugSplat.MinidumpTypeId.WindowsNative;
+            sut.Description = "Default description - overridden";
+            sut.Email = "default@bugsplat.com - overridden";
+            sut.User = "Default - overridden";
+            sut.Key = "Default - overridden";
             var options = new MinidumpPostOptions()
             {
+                MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows,
                 Description = "BugSplat rocks!",
                 Email = "fred@bugsplat.com",
                 User = "Fred",
