@@ -50,6 +50,7 @@ namespace BugSplatDotNetStandard
         public enum ExceptionTypeId
         {
             Unknown = 0,
+            UnityLegacy = 12,
             DotNetStandard = 18,
             Unity = 24
         }
@@ -81,23 +82,32 @@ namespace BugSplatDotNetStandard
         /// <summary>
         /// Post an Exception to BugSplat
         /// </summary>
-        /// <param name="ex">The Exception that will be serialized and posted to BugSplat</param>
+        /// <param name="stackTrace">A string representation of an Exception's stack trace</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        public async Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
+        public async Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null)
         {
             using (var httpClient = new HttpClient())
             {
                 options = options ?? new ExceptionPostOptions();
 
                 var uri = new Uri($"https://{database}.bugsplat.com/post/dotnetstandard/");
-                var callstack = ex.ToString();
                 var body = CreateMultiPartFormDataContent(options);
                 var crashTypeId = options?.ExceptionType != ExceptionTypeId.Unknown ? options.ExceptionType : ExceptionType;
-                body.Add(new StringContent(callstack), "callstack");
+                body.Add(new StringContent(stackTrace), "callstack");
                 body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
 
                 return await httpClient.PostAsync(uri, body);
             }
+        }
+
+        /// <summary>
+        /// Post an Exception to BugSplat
+        /// </summary>
+        /// <param name="ex">The Exception that will be serialized and posted to BugSplat</param>
+        /// <param name="options">Optional parameters that will override the defaults if provided</param>
+        public async Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
+        {
+            return await Post(ex.ToString(), options);
         }
 
         /// <summary>
