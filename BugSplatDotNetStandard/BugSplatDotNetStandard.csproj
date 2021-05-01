@@ -9,12 +9,12 @@
     <Copyright>© 2021 BugSplat</Copyright>
     <PackageProjectUrl>https://www.bugsplat.com</PackageProjectUrl>
     <PackageTags>bugsplat crash reporting reporter unhandled exception error catch analytics debug debugging debugger stack trace line numbers net uwp core mono unity xamarin</PackageTags>
-    <AssemblyVersion>2.0.2.0</AssemblyVersion>
-    <FileVersion>2.0.2.0</FileVersion>
+    <AssemblyVersion>2.0.3.0</AssemblyVersion>
+    <FileVersion>2.0.3.0</FileVersion>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/BugSplat-Git/BugSplatDotNetStandard</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>2.0.2</Version>
+    <Version>2.0.3</Version>
     <PackageReleaseNotes>Added support for uploading minidumps. Updated the public API surface to support various options.</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
