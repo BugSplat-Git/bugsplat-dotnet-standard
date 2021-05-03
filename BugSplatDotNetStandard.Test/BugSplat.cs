@@ -41,7 +41,7 @@ namespace Tests
         }
 
         [Test]
-        public void BugSplat_PostMinidump_ShouldPostMinidumpToBugSplat()
+        public void BugSplat_Post_ShouldPostMinidumpToBugSplat()
         {
             var sut = new BugSplat("fred", "myConsoleCrasher", "2021.4.23.0");
             var minidumpFileInfo = new FileInfo("minidump.dmp");
@@ -60,6 +60,37 @@ namespace Tests
             };
             options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
             var response = sut.Post(minidumpFileInfo, options).Result;
+            var body = response.Content.ReadAsStringAsync().Result;
+
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Test]
+        public void BugSplat_Post_ShouldPostStackTraceToBugSplat()
+        {
+            var sut = new BugSplat("fred", "MyUnityCrasher", "1.0");
+            sut.ExceptionType = BugSplat.ExceptionTypeId.Unity;
+            sut.Description = "Default description - overridden";
+            sut.Email = "default@bugsplat.com - overridden";
+            sut.User = "Default - overridden";
+            sut.Key = "Default - overridden";
+            var stackTrace = @"Exception: BugSplat rocks!
+                Main.ThrowException () (at Assets/Main.cs:75)
+                Main.SampleStackFrame2 () (at Assets/Main.cs:95)
+                Main.SampleStackFrame1 () (at Assets/Main.cs:90)
+                Main.SampleStackFrame0 () (at Assets/Main.cs:85)
+                Main.GenerateSampleStackFramesAndThrow () (at Assets/Main.cs:80)
+                Main.Update() (at Assets/Main.cs:69)";
+            var options = new ExceptionPostOptions()
+            {
+                ExceptionType = BugSplat.ExceptionTypeId.UnityLegacy,
+                Description = "BugSplat rocks!",
+                Email = "fred@bugsplat.com",
+                User = "Fred",
+                Key = "the key!"
+            };
+            options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
+            var response = sut.Post(stackTrace, options).Result;
             var body = response.Content.ReadAsStringAsync().Result;
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
