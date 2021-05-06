@@ -8,6 +8,23 @@ namespace Tests
 {
     public class BugSplatTest
     {
+        [Test]
+        public void BugSplat_Constructor_ShouldThrowIfDatabaseIsNull()
+        {
+            Assert.Throws<ArgumentException>(() => new BugSplat(null, "my-app", "1.0.0"));
+        }
+
+        [Test]
+        public void BugSplat_Constructor_ShouldThrowIfApplicationIsNull()
+        {
+            Assert.Throws<ArgumentException>(() => new BugSplat("fred", null, "1.0.0"));
+        }
+
+        [Test]
+        public void BugSplat_Constructor_ShouldThrowIfVersionIsNull()
+        {
+            Assert.Throws<ArgumentException>(() => new BugSplat("fred", "my-app", null));
+        }
 
         [Test]
         public void BugSplat_Post_ShouldPostExceptionToBugSplat()
@@ -41,6 +58,17 @@ namespace Tests
         }
 
         [Test]
+        public void BugSplat_Post_ShouldThrowIfExIsNull()
+        {
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                Exception ex = null;
+                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+                await bugsplat.Post(ex);
+            });
+        }
+
+        [Test]
         public void BugSplat_Post_ShouldPostMinidumpToBugSplat()
         {
             var sut = new BugSplat("fred", "myConsoleCrasher", "2021.4.23.0");
@@ -63,6 +91,17 @@ namespace Tests
             var body = response.Content.ReadAsStringAsync().Result;
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Test]
+        public void BugSplat_Post_ShouldThrowIfMinidumpFileInfoIsNull()
+        {
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                FileInfo fileInfo = null;
+                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+                await bugsplat.Post(fileInfo);
+            });
         }
 
         [Test]
@@ -94,6 +133,17 @@ namespace Tests
             var body = response.Content.ReadAsStringAsync().Result;
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Test]
+        public void BugSplat_Post_ShouldThrowIfStackTraceFileInfoIsNull()
+        {
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                string stackTrace = null;
+                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+                await bugsplat.Post(stackTrace);
+            });
         }
     }
 
