@@ -74,6 +74,10 @@ namespace BugSplatDotNetStandard
         /// <param name="version">Your application's version (must match value used to upload symbols)</param>
         public BugSplat(string database, string application, string version)
         {
+            ThrowIfArgumentIsNullOrEmpty(database, "database");
+            ThrowIfArgumentIsNullOrEmpty(application, "application");
+            ThrowIfArgumentIsNullOrEmpty(version, "version");
+
             this.database = database;
             this.application = application;
             this.version = version;
@@ -86,6 +90,8 @@ namespace BugSplatDotNetStandard
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         public async Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null)
         {
+            ThrowIfArgumentIsNull(stackTrace, "stackTrace");
+
             using (var httpClient = new HttpClient())
             {
                 options = options ?? new ExceptionPostOptions();
@@ -107,6 +113,8 @@ namespace BugSplatDotNetStandard
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         public async Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
         {
+            ThrowIfArgumentIsNull(ex, "ex");
+
             return await Post(ex.ToString(), options);
         }
 
@@ -117,6 +125,8 @@ namespace BugSplatDotNetStandard
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
         public async Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, MinidumpPostOptions options = null)
         {
+            ThrowIfArgumentIsNull(minidumpFileInfo, "minidumpFileInfo");
+
             using (var httpClient = new HttpClient())
             {
                 options = options ?? new MinidumpPostOptions();
@@ -129,6 +139,22 @@ namespace BugSplatDotNetStandard
                 body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
 
                 return await httpClient.PostAsync(uri, body);
+            }
+        }
+
+        private void ThrowIfArgumentIsNull(object argument, string name)
+        {
+            if (argument == null)
+            {
+                throw new ArgumentNullException($"{name} cannot be null!");
+            }
+        }
+
+        private void ThrowIfArgumentIsNullOrEmpty(string argument, string name)
+        {
+            if (string.IsNullOrEmpty(argument))
+            {
+                throw new ArgumentException($"{name} cannot be null or empty!");
             }
         }
 
