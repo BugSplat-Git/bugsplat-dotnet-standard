@@ -59,6 +59,7 @@ namespace BugSplatDotNetStandard
         {
             Unknown = 0,
             WindowsNative = 1,
+            DotNet = 8,
             UnityNativeWindows = 15
         }
 
@@ -135,7 +136,7 @@ namespace BugSplatDotNetStandard
                 var crashTypeId = options?.MinidumpType != MinidumpTypeId.Unknown ? options.MinidumpType : MinidumpType;
                 var minidump = File.ReadAllBytes(minidumpFileInfo.FullName);
                 var body = CreateMultiPartFormDataContent(options);
-                body.Add(new ByteArrayContent(minidump), "minidump", "minidump.dmp");
+                body.Add(new ByteArrayContent(minidump), "minidump", minidumpFileInfo.Name);
                 body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
 
                 return await httpClient.PostAsync(uri, body);
