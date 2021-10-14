@@ -58,7 +58,7 @@ namespace BugSplatDotNetStandard
         {
             Unknown = 0,
             WindowsNative = 1,
-            DotNet = 2,
+            DotNet = 8,
             UnityNativeWindows = 15
         }
 
