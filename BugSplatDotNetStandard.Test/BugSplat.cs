@@ -88,9 +88,7 @@ namespace Tests
             };
             options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
 
-            var md5 = "B7AAAD5CD414C986C98B7560478DB0A2";
-            
-            var response = sut.Post(minidumpFileInfo, options, md5).Result;
+            var response = sut.Post(minidumpFileInfo, options).Result;
             var body = response.Content.ReadAsStringAsync().Result;
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);

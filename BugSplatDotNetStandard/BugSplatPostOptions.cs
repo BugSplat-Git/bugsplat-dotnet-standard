@@ -73,7 +73,7 @@ namespace BugSplatDotNetStandard
         public string FileName { get; set; } = string.Empty;
     }
 
-    internal class AWSResponse
+    internal class GetPresignedUrlResponse
     {
         public string Url;
     }
