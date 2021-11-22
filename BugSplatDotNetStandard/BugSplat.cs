@@ -175,8 +175,8 @@ namespace BugSplatDotNetStandard
             try
             {
                 var json = await response.Content.ReadAsStringAsync();
-                var awsResponse = JsonConvert.DeserializeObject<AWSResponse>(json);
-                return new Uri(awsResponse.Url);
+                var presignedUrlResponse = JsonConvert.DeserializeObject<GetPresignedUrlResponse>(json);
+                return new Uri(presignedUrlResponse.Url);
             }
             catch
             {
