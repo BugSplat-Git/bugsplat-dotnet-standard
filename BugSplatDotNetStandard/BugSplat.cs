@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -128,30 +129,30 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="ex">The minidump file that will be posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        public async Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, MinidumpPostOptions options = null, string md5 = "")
+        public async Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, MinidumpPostOptions options = null)
         {
             ThrowIfArgumentIsNull(minidumpFileInfo, "minidumpFileInfo");
 
             options = options ?? new MinidumpPostOptions();
 
-            var crashUploadResponse = await getCrashUploadUrl(minidumpFileInfo);
+            var crashUploadResponse = await GetCrashUploadUrl(minidumpFileInfo);
 
             ThrowIfHttpRequestFailed(crashUploadResponse);
 
-            var presignedUrl = await deserializeCrashUploadUrl(crashUploadResponse);
-            var uploadFileResponse = await uploadFileToPresignedURL(presignedUrl, minidumpFileInfo);
+            var presignedUrl = await ParseCrashUploadUrl(crashUploadResponse);
+            var uploadFileResponse = await UploadFileToPresignedURL(presignedUrl, minidumpFileInfo);
 
             ThrowIfHttpRequestFailed(uploadFileResponse);
 
-            var commitS3CrashResponse = await commitS3CrashUpload(presignedUrl.ToString(), options, md5);
+            var md5 = GetETagFromResponseHeaders(uploadFileResponse.Headers);
+            var commitS3CrashResponse = await CommitS3CrashUpload(presignedUrl.ToString(), options, md5);
 
             ThrowIfHttpRequestFailed(commitS3CrashResponse);
 
             return commitS3CrashResponse;
         }
 
-
-        private async Task<HttpResponseMessage> getCrashUploadUrl(FileInfo fileInfo)
+        private async Task<HttpResponseMessage> GetCrashUploadUrl(FileInfo fileInfo)
         {
             string path = $"{baseUrl}/api/getCrashUploadUrl";
             string route = $"{path}?database={database}&appName={application}&appVersion={version}&crashPostSize={fileInfo.Length}";
@@ -162,21 +163,28 @@ namespace BugSplatDotNetStandard
             }
         }
 
-        private async Task<Uri> deserializeCrashUploadUrl(HttpResponseMessage response)
+        private string GetETagFromResponseHeaders(HttpHeaders headers)
         {
-            var json = await response.Content.ReadAsStringAsync();
+            var etagQuoted = headers.GetValues("ETag").FirstOrDefault();
+            var etag = etagQuoted.Replace("\"", "");
+            return etag;
+        }
+
+        private async Task<Uri> ParseCrashUploadUrl(HttpResponseMessage response)
+        {
             try
             {
+                var json = await response.Content.ReadAsStringAsync();
                 var awsResponse = JsonConvert.DeserializeObject<AWSResponse>(json);
                 return new Uri(awsResponse.Url);
             }
             catch
             {
-                throw new JsonException("Failed to deserialize crash upload url");
+                throw new JsonException("Failed to parse crash upload url");
             }
         }
 
-        private async Task<HttpResponseMessage> uploadFileToPresignedURL(Uri uri, FileInfo file)
+        private async Task<HttpResponseMessage> UploadFileToPresignedURL(Uri uri, FileInfo file)
         {
             using (var body = new MultipartFormDataContent())
             {
@@ -189,7 +197,7 @@ namespace BugSplatDotNetStandard
             }
         }
 
-        private async Task<HttpResponseMessage> commitS3CrashUpload(string s3Key, MinidumpPostOptions options, string md5 = "")
+        private async Task<HttpResponseMessage> CommitS3CrashUpload(string s3Key, MinidumpPostOptions options, string md5 = "")
         {
             using (var httpClient = new HttpClient())
             {
