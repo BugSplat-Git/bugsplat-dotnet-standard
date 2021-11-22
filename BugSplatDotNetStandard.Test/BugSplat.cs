@@ -87,6 +87,7 @@ namespace Tests
                 Key = "the key!"
             };
             options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
+
             var response = sut.Post(minidumpFileInfo, options).Result;
             var body = response.Content.ReadAsStringAsync().Result;
 

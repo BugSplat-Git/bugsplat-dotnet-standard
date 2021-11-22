@@ -72,4 +72,10 @@ namespace BugSplatDotNetStandard
         /// </summary>
         public string FileName { get; set; } = string.Empty;
     }
+
+    internal class GetPresignedUrlResponse
+    {
+        public string Url;
+    }
+
 }
