@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using static BugSplatDotNetStandard.BugSplat;
@@ -32,7 +31,7 @@ namespace BugSplatDotNetStandard
         /// <summary>
         /// A list of form data key value pairs to be added to the post
         /// </summary>
-        public List<FormDataParam> AdditionalFormDataParams { get; } = new List<FormDataParam>();
+        public List<IFormDataParam> AdditionalFormDataParams { get; } = new List<IFormDataParam>();
 
         /// <summary>
         /// A description to be added to the post that overrides the corresponding default value
@@ -50,26 +49,38 @@ namespace BugSplatDotNetStandard
         public string Key { get; set; } = string.Empty;
 
         /// <summary>
+        /// A key to be added to the post that overrides the corresponding default value
+        /// </summary>
+        public string IpAddress { get; set; } = string.Empty;
+
+        /// <summary>
         /// An user to be added to the post that overrides the corresponding default value
         /// </summary>
         public string User { get; set; } = string.Empty;
     }
 
-    public class FormDataParam
+    public interface IFormDataParam
     {
         /// <summary>
         /// Name to be added to MultipartFormDataContent
         /// </summary>
-        public string Name { get; set; }
+        string Name { get; set; }
 
         /// <summary>
         /// Content to be added to MultipartFormDataContent
         /// </summary>
-        public HttpContent Content { get; set; }
+        HttpContent Content { get; set; }
 
         /// <summary>
         /// Optional FileName to be added to MultipartFormDataContent if not null or empty
         /// </summary>
+        string FileName { get; set; }
+    }
+
+    public class FormDataParam : IFormDataParam
+    {
+        public string Name { get; set; }
+        public HttpContent Content { get; set; }
         public string FileName { get; set; } = string.Empty;
     }
 

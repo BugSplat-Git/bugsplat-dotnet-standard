@@ -239,7 +239,7 @@ namespace BugSplatDotNetStandard
 
         private MultipartFormDataContent CreateMultiPartFormDataContent(BugSplatPostOptions options = null)
         {
-            var additionalFormDataParams = options?.AdditionalFormDataParams ?? new List<FormDataParam>();
+            var additionalFormDataParams = options?.AdditionalFormDataParams ?? new List<IFormDataParam>();
             var description = BugSplatUtils.GetStringValueOrDefault(options?.Description, Description);
             var email = BugSplatUtils.GetStringValueOrDefault(options?.Email, Email);
             var key = BugSplatUtils.GetStringValueOrDefault(options?.Key, Key);
