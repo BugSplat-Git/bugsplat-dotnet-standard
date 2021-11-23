@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard.Utils;
 using Newtonsoft.Json;
@@ -135,27 +137,59 @@ namespace BugSplatDotNetStandard
 
             options = options ?? new MinidumpPostOptions();
 
-            var crashUploadResponse = await GetCrashUploadUrl(minidumpFileInfo);
+            var zipBytes = CreateInMemoryCrashZipFile(minidumpFileInfo, options);
+            var crashUploadResponse = await GetCrashUploadUrl(zipBytes.Length);
 
             ThrowIfHttpRequestFailed(crashUploadResponse);
 
             var presignedUrl = await ParseCrashUploadUrl(crashUploadResponse);
-            var uploadFileResponse = await UploadFileToPresignedURL(presignedUrl, minidumpFileInfo);
+            var uploadFileResponse = await UploadFileToPresignedURL(presignedUrl, zipBytes);
 
             ThrowIfHttpRequestFailed(uploadFileResponse);
 
             var md5 = GetETagFromResponseHeaders(uploadFileResponse.Headers);
-            var commitS3CrashResponse = await CommitS3CrashUpload(presignedUrl.ToString(), options, md5);
+            var commitS3CrashResponse = await CommitS3CrashUpload(options, presignedUrl.ToString(), md5);
 
             ThrowIfHttpRequestFailed(commitS3CrashResponse);
 
             return commitS3CrashResponse;
         }
 
-        private async Task<HttpResponseMessage> GetCrashUploadUrl(FileInfo fileInfo)
+        private byte[] CreateInMemoryCrashZipFile(FileInfo minidumpFileInfo, MinidumpPostOptions options)
         {
-            string path = $"{baseUrl}/api/getCrashUploadUrl";
-            string route = $"{path}?database={database}&appName={application}&appVersion={version}&crashPostSize={fileInfo.Length}";
+            var files = new List<InMemoryFile>();
+            files.Add(new InMemoryFile() { FileName = minidumpFileInfo.Name, Content = File.ReadAllBytes(minidumpFileInfo.FullName) });
+
+            foreach (var attachment in options.AdditionalAttachments)
+            {
+                files.Add(new InMemoryFile() { FileName = attachment.Name, Content = File.ReadAllBytes(attachment.FullName) });
+            }
+
+            byte[] zipBytes;
+            using (var archiveStream = new MemoryStream())
+            {
+                using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create, true))
+                {
+                    foreach (var file in files)
+                    {
+                        var zipArchiveEntry = archive.CreateEntry(file.FileName, CompressionLevel.Fastest);
+                        using (var zipStream = zipArchiveEntry.Open())
+                        {
+                            zipStream.Write(file.Content, 0, file.Content.Length);
+                        }
+                    }
+                }
+
+                zipBytes = archiveStream.ToArray();
+            }
+
+            return zipBytes;
+        }
+
+        private async Task<HttpResponseMessage> GetCrashUploadUrl(int crashPostSize)
+        {
+            var path = $"{baseUrl}/api/getCrashUploadUrl";
+            var route = $"{path}?database={database}&appName={application}&appVersion={version}&crashPostSize={crashPostSize}";
 
             using (var httpClient = new HttpClient())
             {
@@ -184,20 +218,16 @@ namespace BugSplatDotNetStandard
             }
         }
 
-        private async Task<HttpResponseMessage> UploadFileToPresignedURL(Uri uri, FileInfo file)
+        private async Task<HttpResponseMessage> UploadFileToPresignedURL(Uri uri, byte[] bytes)
         {
-            using (var body = new MultipartFormDataContent())
+            using (var httpClient = new HttpClient())
             {
-                body.Add(new ByteArrayContent(File.ReadAllBytes(file.FullName)), "minidump");
-                using (var httpClient = new HttpClient())
-                {
-                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-                    return await httpClient.PutAsync(uri, body);
-                }
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+                return await httpClient.PutAsync(uri, new ByteArrayContent(bytes));
             }
         }
 
-        private async Task<HttpResponseMessage> CommitS3CrashUpload(string s3Key, MinidumpPostOptions options, string md5 = "")
+        private async Task<HttpResponseMessage> CommitS3CrashUpload(MinidumpPostOptions options, string s3Key, string md5)
         {
             using (var httpClient = new HttpClient())
             {
@@ -244,16 +274,16 @@ namespace BugSplatDotNetStandard
             var email = BugSplatUtils.GetStringValueOrDefault(options?.Email, Email);
             var key = BugSplatUtils.GetStringValueOrDefault(options?.Key, Key);
             var user = BugSplatUtils.GetStringValueOrDefault(options?.User, User);
-            
+
             var body = new MultipartFormDataContent
-                {
-                    { new StringContent(database), "database" },
-                    { new StringContent(application), "appName" },
-                    { new StringContent(version), "appVersion" },
-                    { new StringContent(description), "description" },
-                    { new StringContent(email), "email" },
-                    { new StringContent(key), "appKey" },
-                    { new StringContent(user), "user" }
+            {
+                { new StringContent(database), "database" },
+                { new StringContent(application), "appName" },
+                { new StringContent(version), "appVersion" },
+                { new StringContent(description), "description" },
+                { new StringContent(email), "email" },
+                { new StringContent(key), "appKey" },
+                { new StringContent(user), "user" }
             };
 
             foreach (var param in additionalFormDataParams)
@@ -293,5 +323,11 @@ namespace BugSplatDotNetStandard
 
             return body;
         }
+    }
+
+    internal class InMemoryFile
+    {
+        public string FileName { get; set; }
+        public byte[] Content { get; set; }
     }
 }
