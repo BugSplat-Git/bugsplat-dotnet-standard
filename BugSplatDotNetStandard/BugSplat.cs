@@ -5,10 +5,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard.Utils;
-using Newtonsoft.Json;
 
 namespace BugSplatDotNetStandard
 {
@@ -209,12 +207,19 @@ namespace BugSplatDotNetStandard
             try
             {
                 var json = await response.Content.ReadAsStringAsync();
-                var presignedUrlResponse = JsonConvert.DeserializeObject<GetPresignedUrlResponse>(json);
-                return new Uri(presignedUrlResponse.Url);
+
+                // We have opted to not introduce a 3rd-party dependency to better support Unity.
+                // When Unity moves to .NET 6 we can replace this with System.Text.Json.
+                // More information about Unity's plans to update to .NET 6 can be found here:
+                // https://forum.unity.com/threads/unity-future-net-development-status.1092205/
+                var jsonObj = new JsonObject(json);
+                var url = jsonObj.GetValue("url");
+
+                return new Uri(url);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new JsonException("Failed to parse crash upload url");
+                throw new Exception("Failed to parse crash upload url", ex);
             }
         }
 
