@@ -33,8 +33,14 @@ if (-not $signSuccess) {
 
 WriteLine("Publishing $nupkgPath...")
 
-#$publishOuptut = [string](dotnet nuget push AppLogger.1.0.0.nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json)
+$publishOutput = [string](dotnet nuget push $nupkgPath --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json)
 
-#Write-Output "$publishOutput"
+WriteLine("$publishOutput")
+
+$publishSuccess = $publishOutput.Contains("Your package was pushed.");
+
+if (!not $publishSuccess) {
+    throw 'Publish failed'
+}
 
 WriteLine("Great success!")
