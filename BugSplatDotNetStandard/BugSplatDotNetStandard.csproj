@@ -17,6 +17,7 @@
     <Version>2.1.1</Version>
     <PackageReleaseNotes>Added support for uploading minidumps. Updated the public API surface to support various options.</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
