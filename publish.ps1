@@ -39,7 +39,7 @@ WriteLine("$publishOutput")
 
 $publishSuccess = $publishOutput.Contains("Your package was pushed.");
 
-if (!not $publishSuccess) {
+if (-not $publishSuccess) {
     throw 'Publish failed'
 }
 
