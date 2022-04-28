@@ -1,7 +1,13 @@
+[![bugsplat-github-banner-basic-outline](https://user-images.githubusercontent.com/20464226/149019306-3186103c-5315-4dad-a499-4fd1df408475.png)](https://bugsplat.com)
+<br/>
+# <div align="center">BugSplat</div> 
+### **<div align="center">Crash and error reporting built for busy developers.</div>**
+<div align="center">
+    <img alt="Follow @bugsplatco on Twitter" src="https://img.shields.io/twitter/follow/bugsplatco?label=Follow%20BugSplat&style=social">
+    <img alt="Join BugSplat on Discord" src="https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social">
+</div>
 
-[![alt text](https://user-images.githubusercontent.com/2646053/117152910-77ae4800-ad88-11eb-83a4-77a72a856d51.png "BugSplat logo")](https://www.bugsplat.com)
-
-## Introduction
+## 👋 Introduction
 
 BugSplatDotNetStandard allows you to capture and track exceptions on all platforms that support .NET Standard 2.0. This includes, .NET Core, Univeral Windows Platform, Mono and more! Before continuing with the tutorial please make sure you have completed the following checklist:
 
@@ -10,13 +16,15 @@ BugSplatDotNetStandard allows you to capture and track exceptions on all platfor
 
 You can also view the [MyUwpCrasher](https://github.com/BugSplat-Git/MyUwpCrasher) repo which contains a sample application with BugSplatDotNetStandard installed and configured to post exceptions to BugSplat.
 
-## Configuration
+## 🏗 Installation
 
 Install the [BugSplatDotNetStandard](https://www.nuget.org/packages/BugSplatDotNetStandard/) NuGet package.
 
 ```ps
 Install-Package BugSplatDotNetStandard
 ```
+
+## ⚙️ Configuration
 
 After you've installed the NuGet package, add a using statement for the `BugSplatDotNetStandard` namespace.
 
@@ -69,14 +77,18 @@ options.AdditionalAttachments.Add(new FileInfo("/path/to/attachment2.txt"));
 await bugsplat.Post(ex, options);
 ```
 
+## ✅ Verification
+
 Once you've generated an error, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have to correct database selected in the dropdown menu. You should see a new crash report under the **Recent Crashes** section:
 
-![alt text](https://user-images.githubusercontent.com/2646053/117152986-885ebe00-ad88-11eb-8de7-87c6e52355e9.png "BugSplat dashboard")
+<img width="1727" alt="BugSplat Dashboard Page" src="https://user-images.githubusercontent.com/2646053/165813342-289ab25d-90fa-4110-8922-8bbdab687803.png">
 
  Click the link in the **ID** column to see details about the crash:
 
-![alt text](https://user-images.githubusercontent.com/2646053/117152951-8137b000-ad88-11eb-8986-e49e2678da62.png "BugSplat crash details")
+<img width="1712" alt="BugSplat Crash Page" src="https://user-images.githubusercontent.com/2646053/165813564-0d81640f-235e-4dd0-b19f-522493fd92d7.png">
 
 That’s it! Your application is now configured to post crash reports to BugSplat.
 
-If you have any additional questions, feel free to email [support](mailto:support@bugsplat.com) or reach out via the chat in our web application.
+## 👷 Support
+
+If you have any additional questions, please email or [support](mailto:support@bugsplat.com) team, join us on [Discord](https://discord.gg/K4KjjRV5ve), or reach out via the chat in our web application.
