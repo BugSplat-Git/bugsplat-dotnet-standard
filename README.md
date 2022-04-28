@@ -3,8 +3,12 @@
 # <div align="center">BugSplat</div> 
 ### **<div align="center">Crash and error reporting built for busy developers.</div>**
 <div align="center">
-    <img alt="Follow @bugsplatco on Twitter" src="https://img.shields.io/twitter/follow/bugsplatco?label=Follow%20BugSplat&style=social">
-    <img alt="Join BugSplat on Discord" src="https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social">
+    <a href="https://twitter.com/BugSplatCo">
+        <img alt="Follow @bugsplatco on Twitter" src="https://img.shields.io/twitter/follow/bugsplatco?label=Follow%20BugSplat&style=social">
+    </a>
+    <a href="https://discord.gg/K4KjjRV5ve">
+        <img alt="Join BugSplat on Discord" src="https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social">
+    </a>
 </div>
 
 ## 👋 Introduction
