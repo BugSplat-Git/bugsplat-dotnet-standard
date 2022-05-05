@@ -30,7 +30,7 @@ namespace Tests
 
 
         [Test]
-        public void CrashPostClient_Constructor_ShouldThrowIfHttpClientFactoryIsNullOrEmpty()
+        public void CrashPostClient_Constructor_ShouldThrowIfHttpClientFactoryIsNull()
         {
             Assert.Throws<ArgumentNullException>(() => new CrashPostClient(null, S3ClientFactory.Default));
         }

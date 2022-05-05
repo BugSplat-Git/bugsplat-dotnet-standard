@@ -23,6 +23,9 @@ namespace BugSplatDotNetStandard.Api
             IS3ClientFactory s3ClientFactory
         )
         {
+            ThrowIfArgumentIsNull(httpClientFactory, "httpClientFactory");
+            ThrowIfArgumentIsNull(s3ClientFactory, "s3ClientFactory");
+            
             this.httpClient = httpClientFactory.CreateClient();
             this.s3Client = s3ClientFactory.Create();
         }
