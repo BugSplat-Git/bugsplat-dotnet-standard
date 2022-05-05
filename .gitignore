@@ -266,3 +266,6 @@ __pycache__/
 
 # DotNetEnv
 .env
+
+# Test Files
+!BugSplatDotNetStandard.Test/Files/**
