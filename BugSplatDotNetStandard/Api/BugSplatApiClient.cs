@@ -20,7 +20,7 @@ namespace BugSplatDotNetStandard.Api
         Uri Host { get; set; }
 
         /// <summary>
-        /// Authenicate with the BugSplat backend and persist credentials for future requests
+        /// Authenticate with the BugSplat backend and persist credentials for future requests
         /// </summary>
         Task<HttpResponseMessage> Authenticate();
 
