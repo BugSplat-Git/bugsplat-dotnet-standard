@@ -1,10 +1,6 @@
-﻿
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("BugSplatDotNetStandard.Test")]
-namespace BugSplatDotNetStandard.Utils
+﻿namespace BugSplatDotNetStandard.Utils
 {
-    internal class BugSplatUtils
+    internal class StringUtils
     {
         public static string GetStringValueOrDefault(string value, string defaultValue)
         {

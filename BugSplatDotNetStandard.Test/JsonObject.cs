@@ -1,4 +1,4 @@
-﻿using BugSplatDotNetStandard.Utils;
+﻿using BugSplatDotNetStandard.Http;
 using NUnit.Framework;
 
 namespace Tests

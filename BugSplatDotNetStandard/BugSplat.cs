@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using BugSplatDotNetStandard.Utils;
+using BugSplatDotNetStandard.Http;
+using BugSplatDotNetStandard.Api;
+using static BugSplatDotNetStandard.Utils.ArgumentContracts;
 
 namespace BugSplatDotNetStandard
 {
     /// <summary>
     /// A class for uploading Exceptions and minidump files to BugSplat
     /// </summary>
-    public class BugSplat
+    public class BugSplat: IExceptionPostOptions, IMinidumpPostOptions
     {
         /// <summary>
         /// A list of files to be added to the upload at post time
@@ -36,9 +35,19 @@ namespace BugSplatDotNetStandard
         public string Email { get; set; } = string.Empty;
 
         /// <summary>
+        /// A list of form data key value pairs to be added to the upload at post time
+        /// </summary>
+        public List<IFormDataParam> FormDataParams { get; } = new List<IFormDataParam>();
+
+        /// <summary>
         /// A default key added to the upload that can be overriden at post time
         /// </summary>
         public string Key { get; set; } = string.Empty;
+
+        /// <summary>
+        /// A default IP Address value added to the upload that can be overriden at post time
+        /// </summary>
+        public string IpAddress { get; set; } = string.Empty;
 
         /// <summary>
         /// An identifier that tells the BugSplat backend how to process uploaded minidumps
@@ -66,11 +75,9 @@ namespace BugSplatDotNetStandard
             UnityNativeWindows = 15
         }
 
-        private readonly string database;
-        private readonly string application;
-        private readonly string version;
-
-        private string baseUrl => $"https://{database}.bugsplat.com";
+        public string Database { get; private set; }
+        public string Application { get; private set; }
+        public string Version { get; private set; }
 
         /// <summary>
         /// Post Exceptions and minidump files to BugSplat
@@ -84,9 +91,9 @@ namespace BugSplatDotNetStandard
             ThrowIfArgumentIsNullOrEmpty(application, "application");
             ThrowIfArgumentIsNullOrEmpty(version, "version");
 
-            this.database = database;
-            this.application = application;
-            this.version = version;
+            this.Database = database;
+            this.Application = application;
+            this.Version = version;
         }
 
         /// <summary>
@@ -98,17 +105,16 @@ namespace BugSplatDotNetStandard
         {
             ThrowIfArgumentIsNull(stackTrace, "stackTrace");
 
-            using (var httpClient = new HttpClient())
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
-                options = options ?? new ExceptionPostOptions();
-
-                var uri = new Uri($"{baseUrl}/post/dotnetstandard/");
-                var body = CreateMultiPartFormDataContent(options);
-                var crashTypeId = options?.ExceptionType != ExceptionTypeId.Unknown ? options.ExceptionType : ExceptionType;
-                body.Add(new StringContent(stackTrace), "callstack");
-                body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
-
-                return await httpClient.PostAsync(uri, body);
+                return await crashPostClient.PostException(
+                    Database,
+                    Application,
+                    Version,
+                    stackTrace,
+                    this,
+                    options
+                );
             }
         }
 
@@ -133,206 +139,17 @@ namespace BugSplatDotNetStandard
         {
             ThrowIfArgumentIsNull(minidumpFileInfo, "minidumpFileInfo");
 
-            options = options ?? new MinidumpPostOptions();
-
-            var zipBytes = CreateInMemoryCrashZipFile(minidumpFileInfo, options);
-            var crashUploadResponse = await GetCrashUploadUrl(zipBytes.Length);
-
-            ThrowIfHttpRequestFailed(crashUploadResponse);
-
-            var presignedUrl = await ParseCrashUploadUrl(crashUploadResponse);
-            var uploadFileResponse = await UploadFileToPresignedURL(presignedUrl, zipBytes);
-
-            ThrowIfHttpRequestFailed(uploadFileResponse);
-
-            var md5 = GetETagFromResponseHeaders(uploadFileResponse.Headers);
-            var commitS3CrashResponse = await CommitS3CrashUpload(options, presignedUrl.ToString(), md5);
-
-            ThrowIfHttpRequestFailed(commitS3CrashResponse);
-
-            return commitS3CrashResponse;
-        }
-
-        private byte[] CreateInMemoryCrashZipFile(FileInfo minidumpFileInfo, MinidumpPostOptions options)
-        {
-            var files = new List<InMemoryFile>();
-            files.Add(new InMemoryFile() { FileName = minidumpFileInfo.Name, Content = File.ReadAllBytes(minidumpFileInfo.FullName) });
-
-            foreach (var attachment in options.AdditionalAttachments)
+            using(var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
-                files.Add(new InMemoryFile() { FileName = attachment.Name, Content = File.ReadAllBytes(attachment.FullName) });
-            }
-
-            byte[] zipBytes;
-            using (var archiveStream = new MemoryStream())
-            {
-                using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create, true))
-                {
-                    foreach (var file in files)
-                    {
-                        var zipArchiveEntry = archive.CreateEntry(file.FileName, CompressionLevel.Fastest);
-                        using (var zipStream = zipArchiveEntry.Open())
-                        {
-                            zipStream.Write(file.Content, 0, file.Content.Length);
-                        }
-                    }
-                }
-
-                zipBytes = archiveStream.ToArray();
-            }
-
-            return zipBytes;
-        }
-
-        private async Task<HttpResponseMessage> GetCrashUploadUrl(int crashPostSize)
-        {
-            var path = $"{baseUrl}/api/getCrashUploadUrl";
-            var route = $"{path}?database={database}&appName={application}&appVersion={version}&crashPostSize={crashPostSize}";
-
-            using (var httpClient = new HttpClient())
-            {
-                return await httpClient.GetAsync(route);
+                return await crashPostClient.PostMinidump(
+                    Database,
+                    Application,
+                    Version,
+                    minidumpFileInfo,
+                    this,
+                    options
+                );
             }
         }
-
-        private string GetETagFromResponseHeaders(HttpHeaders headers)
-        {
-            var etagQuoted = headers.GetValues("ETag").FirstOrDefault();
-            var etag = etagQuoted.Replace("\"", "");
-            return etag;
-        }
-
-        private async Task<Uri> ParseCrashUploadUrl(HttpResponseMessage response)
-        {
-            try
-            {
-                var json = await response.Content.ReadAsStringAsync();
-
-                // We have opted to not introduce a 3rd-party dependency to better support Unity.
-                // When Unity moves to .NET 6 we can replace this with System.Text.Json.
-                // More information about Unity's plans to update to .NET 6 can be found here:
-                // https://forum.unity.com/threads/unity-future-net-development-status.1092205/
-                var jsonObj = new JsonObject(json);
-                var url = jsonObj.GetValue("url");
-
-                return new Uri(url);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to parse crash upload url", ex);
-            }
-        }
-
-        private async Task<HttpResponseMessage> UploadFileToPresignedURL(Uri uri, byte[] bytes)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-                return await httpClient.PutAsync(uri, new ByteArrayContent(bytes));
-            }
-        }
-
-        private async Task<HttpResponseMessage> CommitS3CrashUpload(MinidumpPostOptions options, string s3Key, string md5)
-        {
-            using (var httpClient = new HttpClient())
-            {
-                var route = $"{baseUrl}/api/commitS3CrashUpload";
-
-                var crashTypeId = options?.MinidumpType != MinidumpTypeId.Unknown ? options.MinidumpType : MinidumpType;
-                var body = CreateMultiPartFormDataContent(options);
-                body.Add(new StringContent($"{(int)crashTypeId}"), "crashTypeId");
-                body.Add(new StringContent(s3Key), "s3Key");
-                body.Add(new StringContent(md5), "md5");
-
-                return await httpClient.PostAsync(route, body);
-            }
-        }
-
-        private void ThrowIfArgumentIsNull(object argument, string name)
-        {
-            if (argument == null)
-            {
-                throw new ArgumentNullException($"{name} cannot be null!");
-            }
-        }
-
-        private void ThrowIfArgumentIsNullOrEmpty(string argument, string name)
-        {
-            if (string.IsNullOrEmpty(argument))
-            {
-                throw new ArgumentException($"{name} cannot be null or empty!");
-            }
-        }
-
-        private void ThrowIfHttpRequestFailed(HttpResponseMessage response)
-        {
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(response.Content.ReadAsStringAsync().Result);
-            }
-        }
-
-        private MultipartFormDataContent CreateMultiPartFormDataContent(BugSplatPostOptions options = null)
-        {
-            var additionalFormDataParams = options?.AdditionalFormDataParams ?? new List<IFormDataParam>();
-            var description = BugSplatUtils.GetStringValueOrDefault(options?.Description, Description);
-            var email = BugSplatUtils.GetStringValueOrDefault(options?.Email, Email);
-            var key = BugSplatUtils.GetStringValueOrDefault(options?.Key, Key);
-            var user = BugSplatUtils.GetStringValueOrDefault(options?.User, User);
-
-            var body = new MultipartFormDataContent
-            {
-                { new StringContent(database), "database" },
-                { new StringContent(application), "appName" },
-                { new StringContent(version), "appVersion" },
-                { new StringContent(description), "description" },
-                { new StringContent(email), "email" },
-                { new StringContent(key), "appKey" },
-                { new StringContent(user), "user" }
-            };
-
-            foreach (var param in additionalFormDataParams)
-            {
-                if (!string.IsNullOrEmpty(param.FileName))
-                {
-                    body.Add(param.Content, param.Name, param.FileName);
-                    continue;
-                }
-
-                body.Add(param.Content, param.Name);
-            }
-
-            if (options != null)
-            {
-                Attachments.AddRange(options.AdditionalAttachments);
-            }
-
-            for (var i = 0; i < Attachments.Count; i++)
-            {
-                byte[] bytes = null;
-                using (var fileStream = File.Open(Attachments[i].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        fileStream.CopyTo(memoryStream);
-                        bytes = memoryStream.ToArray();
-                    }
-                }
-
-                if (bytes != null)
-                {
-                    var name = Attachments[i].Name;
-                    body.Add(new ByteArrayContent(bytes), name, name);
-                }
-            }
-
-            return body;
-        }
-    }
-
-    internal class InMemoryFile
-    {
-        public string FileName { get; set; }
-        public byte[] Content { get; set; }
     }
 }

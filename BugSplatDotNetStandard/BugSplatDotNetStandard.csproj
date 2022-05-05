@@ -22,6 +22,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>BugSplatDotNetStandard.Test</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="../LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>

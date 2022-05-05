@@ -263,3 +263,6 @@ __pycache__/
 # Certificates
 *.cer
 *.pfx
+
+# DotNetEnv
+.env

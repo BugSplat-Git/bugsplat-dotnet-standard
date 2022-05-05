@@ -5,58 +5,81 @@ using static BugSplatDotNetStandard.BugSplat;
 
 namespace BugSplatDotNetStandard
 {
-    public class ExceptionPostOptions: BugSplatPostOptions
+    public class ExceptionPostOptions: BugSplatPostOptions, IExceptionPostOptions
+    {
+        public ExceptionTypeId ExceptionType { get; set; } = ExceptionTypeId.Unknown;
+    }
+
+    public class MinidumpPostOptions: BugSplatPostOptions, IMinidumpPostOptions
+    {
+        public MinidumpTypeId MinidumpType { get; set; } = MinidumpTypeId.Unknown;
+    }
+
+    public abstract class BugSplatPostOptions : IBugSplatPostOptions
+    {
+        public List<FileInfo> Attachments { get; } = new List<FileInfo>();
+
+        public List<IFormDataParam> FormDataParams { get; } = new List<IFormDataParam>();
+
+        public string Description { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
+        public string IpAddress { get; set; } = string.Empty;
+        public string User { get; set; } = string.Empty;
+    }
+
+    public interface IExceptionPostOptions: IBugSplatPostOptions
     {
         /// <summary>
         /// An exception type to be added to the post that overrides the corresponding default values
         /// </summary>
-        public ExceptionTypeId ExceptionType { get; set; } = ExceptionTypeId.Unknown;
+        ExceptionTypeId ExceptionType { get; set; }
     }
 
-    public class MinidumpPostOptions: BugSplatPostOptions
+    public interface IMinidumpPostOptions: IBugSplatPostOptions
     {
         /// <summary>
         /// A minidump type to be added to the post that overrides the corresponding default values
         /// </summary>
-        public MinidumpTypeId MinidumpType { get; set; } = MinidumpTypeId.Unknown;
+        MinidumpTypeId MinidumpType { get; set; }
     }
 
-    public abstract class BugSplatPostOptions
+    public interface IBugSplatPostOptions
     {
         /// <summary>
-        /// A list of attachments to be added to the post
+        /// A list of attachments to be added to the post that will be appended to the corresponding default value.
         /// </summary>
-        public List<FileInfo> AdditionalAttachments { get; } = new List<FileInfo>();
+        List<FileInfo> Attachments { get; }
 
         /// <summary>
-        /// A list of form data key value pairs to be added to the post
+        /// A list of form data key value pairs that will be appended to the corresponding default value.
         /// </summary>
-        public List<IFormDataParam> AdditionalFormDataParams { get; } = new List<IFormDataParam>();
+        List<IFormDataParam> FormDataParams { get; }
 
         /// <summary>
         /// A description to be added to the post that overrides the corresponding default value
         /// </summary>
-        public string Description { get; set; } = string.Empty;
+        string Description { get; set; }
 
         /// <summary>
         /// An email to be added to the post that overrides the corresponding default value
         /// </summary>
-        public string Email { get; set; } = string.Empty;
+        string Email { get; set; }
 
         /// <summary>
         /// A key to be added to the post that overrides the corresponding default value
         /// </summary>
-        public string Key { get; set; } = string.Empty;
+        string Key { get; set; }
 
         /// <summary>
-        /// A key to be added to the post that overrides the corresponding default value
+        /// An IP Address to be added to the post that overrides the corresponding default value
         /// </summary>
-        public string IpAddress { get; set; } = string.Empty;
+        string IpAddress { get; set; }
 
         /// <summary>
-        /// An user to be added to the post that overrides the corresponding default value
+        /// A user to be added to the post that overrides the corresponding default value
         /// </summary>
-        public string User { get; set; } = string.Empty;
+        string User { get; set; }
     }
 
     public interface IFormDataParam
