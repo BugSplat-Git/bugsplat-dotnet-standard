@@ -15,8 +15,9 @@ namespace BugSplatDotNetStandard.Api
 {
     internal class CrashPostClient : IDisposable
     {
+        internal IZipUtils ZipUtils { get; set; } = new ZipUtils();
         private HttpClient httpClient;
-        private S3Client s3Client;
+        private IS3Client s3Client;
 
         public CrashPostClient(
             IHttpClientFactory httpClientFactory,
@@ -27,7 +28,7 @@ namespace BugSplatDotNetStandard.Api
             ThrowIfArgumentIsNull(s3ClientFactory, "s3ClientFactory");
             
             this.httpClient = httpClientFactory.CreateClient();
-            this.s3Client = s3ClientFactory.Create();
+            this.s3Client = s3ClientFactory.CreateClient();
         }
 
         public async Task<HttpResponseMessage> PostException(

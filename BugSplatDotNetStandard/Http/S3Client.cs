@@ -3,25 +3,32 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using BugSplatDotNetStandard.Http;
 
 namespace BugSplatDotNetStandard.Http
 {
     internal interface IS3ClientFactory
     {
-        S3Client Create();
+        IS3Client CreateClient();
     }
 
     internal class S3ClientFactory : IS3ClientFactory
     {
         public static IS3ClientFactory Default = new S3ClientFactory();
 
-        public S3Client Create()
+        public IS3Client CreateClient()
         {
             return new S3Client(HttpClientFactory.Default);
         }
     }
 
-    internal class S3Client: IDisposable
+    interface IS3Client: IDisposable
+    {
+        Task<HttpResponseMessage> UploadFileBytesToPresignedURL(Uri uri, byte[] bytes);
+        Task<HttpResponseMessage> UploadFileStreamToPresignedURL(Uri uri, Stream fileStream);
+    }
+
+    internal class S3Client: IS3Client
     {
         private HttpClient httpClient;
 
@@ -35,7 +42,7 @@ namespace BugSplatDotNetStandard.Http
             return await httpClient.PutAsync(uri, new ByteArrayContent(bytes));
         }
 
-        public async Task<HttpResponseMessage> UploadFileStreamToPresignedURL(Uri uri, FileStream fileStream)
+        public async Task<HttpResponseMessage> UploadFileStreamToPresignedURL(Uri uri, Stream fileStream)
         {
             this.httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
             return await httpClient.PutAsync(uri, new StreamContent(fileStream));

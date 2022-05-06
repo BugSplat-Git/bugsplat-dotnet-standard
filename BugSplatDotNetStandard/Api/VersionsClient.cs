@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard.Http;
+using BugSplatDotNetStandard.Utils;
 using static BugSplatDotNetStandard.Utils.ArgumentContracts;
 
 namespace BugSplatDotNetStandard.Api
@@ -11,10 +12,11 @@ namespace BugSplatDotNetStandard.Api
     /// <summary>
     /// Used to make requests to the BugSplat Versions API
     /// </summary>
-    public class VersionsClient: IDisposable
+    public class VersionsClient : IDisposable
     {
+        internal IZipUtils ZipUtils { get; set; } = new ZipUtils();
         private IBugSplatApiClient bugsplatApiClient;
-        private S3Client s3Client;
+        private IS3Client s3Client;
 
         internal VersionsClient(
             IBugSplatApiClient bugsplatApiClient,
@@ -25,7 +27,7 @@ namespace BugSplatDotNetStandard.Api
             ThrowIfArgumentIsNull(s3ClientFactory, "s3ClientFactory");
 
             this.bugsplatApiClient = bugsplatApiClient;
-            this.s3Client = s3ClientFactory.Create();
+            this.s3Client = s3ClientFactory.CreateClient();
         }
 
         /// <summary>
@@ -75,33 +77,35 @@ namespace BugSplatDotNetStandard.Api
 
             ThrowIfNotAuthenticated(bugsplatApiClient);
 
-            var random = Path.GetRandomFileName();
-            var zipFileName = $"bugsplat-{symbolFileInfo.Name}-{random}.zip";
-            var zipFileFullName = Path.Combine(Path.GetTempPath(), zipFileName);
-            using (var zipFile = ZipFile.Open(zipFileFullName, ZipArchiveMode.Create))
+            var zipFileFullName = ZipUtils.CreateZipFileFullName(symbolFileInfo.Name);
+            try
             {
-                zipFile.CreateEntryFromFile(symbolFileInfo.FullName, symbolFileInfo.Name);
-            }
+                ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
 
-            using (var zipFileStream = new FileStream(zipFileFullName, FileMode.Open))
-            using (
-                var presignedUrlResponse = await this.GetSymbolUploadUrl(
-                    database,
-                    application,
-                    version,
-                    symbolFileInfo.Length,
-                    symbolFileInfo.Name
+                using (var zipFileStream = ZipUtils.CreateZipFileStream(zipFileFullName))
+                using (
+                    var presignedUrlResponse = await this.GetSymbolUploadUrl(
+                        database,
+                        application,
+                        version,
+                        symbolFileInfo.Length,
+                        symbolFileInfo.Name
+                    )
                 )
-            )
+                {
+                    ThrowIfHttpRequestFailed(presignedUrlResponse);
+
+                    var presignedUrl = await this.GetPresignedUrlFromResponse(presignedUrlResponse);
+                    var uploadFileResponse = await s3Client.UploadFileStreamToPresignedURL(presignedUrl, zipFileStream);
+
+                    ThrowIfHttpRequestFailed(uploadFileResponse);
+
+                    return uploadFileResponse;
+                }
+            }
+            finally
             {
-                ThrowIfHttpRequestFailed(presignedUrlResponse);
-
-                var presignedUrl = await this.GetPresignedUrlFromResponse(presignedUrlResponse);
-                var uploadFileResponse = await s3Client.UploadFileStreamToPresignedURL(presignedUrl, zipFileStream);
-                
-                ThrowIfHttpRequestFailed(uploadFileResponse);
-
-                return uploadFileResponse;
+                File.Delete(zipFileFullName);
             }
         }
 

@@ -10,9 +10,18 @@ namespace BugSplatDotNetStandard.Utils
         public byte[] Content { get; set; }
     }
 
-    internal class ZipUtils
+    internal interface IZipUtils
     {
-        public static byte[] CreateInMemoryZipFile(IEnumerable<FileInfo> files)
+        byte[] CreateInMemoryZipFile(IEnumerable<FileInfo> files);
+        void CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files);
+        string CreateZipFileFullName(string inputFileName);
+        Stream CreateZipFileStream(string zipFileFullName);
+        
+    }
+
+    internal class ZipUtils: IZipUtils
+    {
+        public byte[] CreateInMemoryZipFile(IEnumerable<FileInfo> files)
         {
             var inMemoryFiles = new List<InMemoryFile>();
             foreach (var attachment in files)
@@ -40,7 +49,28 @@ namespace BugSplatDotNetStandard.Utils
 
             return zipBytes;
         }
+        
+        public void CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files)
+        {
+            using (var zipFile = ZipFile.Open(zipFileFullName, ZipArchiveMode.Create))
+            {
+                foreach(var file in files)
+                {
+                    zipFile.CreateEntryFromFile(file.FullName, file.Name);
+                }
+            }
+        }
 
+        public string CreateZipFileFullName(string inputFileName)
+        {
+            var random = Path.GetRandomFileName();
+            var zipFileName = $"bugsplat-{inputFileName}-{random}.zip";
+            return Path.Combine(Path.GetTempPath(), zipFileName);
+        }
 
+        public Stream CreateZipFileStream(string zipFileFullName)
+        {
+            return new FileStream(zipFileFullName, FileMode.Open);
+        }
     }
 }

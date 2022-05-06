@@ -1,8 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using BugSplatDotNetStandard.Api;
 using BugSplatDotNetStandard.Http;
+using BugSplatDotNetStandard.Utils;
+using Moq;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -75,6 +81,70 @@ namespace Tests
             Assert.AreEqual(application, (string)row["appName"]);
             Assert.AreEqual(version, (string)row["version"]);
             Assert.Greater(double.Parse((string)row["size"]), 0);
+        }
+
+        [Test]
+        public void VersionsClient_UploadSymbolsFile_ShouldDeleteZipFileAfterUpload()
+        {
+            var application = "my-net-crasher";
+            var version = Guid.NewGuid().ToString();
+            var zipFileFullName = "test.zip";
+            var symbolFileInfo = new FileInfo("Files/myConsoleCrasher.pdb");
+            var mockApiClient = CreateMockBugSplatApiClient();
+            var mockS3ClientFactory = CreateMockS3ClientFactory();
+            var mockZipUtils = CreateMockZipUtils(zipFileFullName);
+            var sut = new VersionsClient(mockApiClient, mockS3ClientFactory);
+            sut.ZipUtils = mockZipUtils;
+
+            var uploadResult = sut.UploadSymbolFile(
+                database,
+                application,
+                version,
+                symbolFileInfo
+            ).Result;
+
+            Assert.False(File.Exists(zipFileFullName));
+        }
+
+        private IS3ClientFactory CreateMockS3ClientFactory()
+        {
+            var s3Response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            };
+            var mockS3Client = new Mock<IS3Client>();
+            mockS3Client
+                .Setup(s => s.UploadFileStreamToPresignedURL(It.IsAny<Uri>(), It.IsAny<Stream>()))
+                .Returns(() => Task.Factory.StartNew(() => s3Response));
+            return new FakeS3ClientFactory(mockS3Client.Object);
+        }
+
+        private IBugSplatApiClient CreateMockBugSplatApiClient()
+        {
+            var presignedUrlResponse = new HttpResponseMessage()
+            {
+                Content = new StringContent("{ \"url\": \"https://x.com\" }")
+            };
+            var mockApiClient = new Mock<IBugSplatApiClient>();
+            mockApiClient
+                .SetupGet(c => c.Authenticated)
+                .Returns(true);
+            mockApiClient
+                .Setup(c => c.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>()))
+                .Returns(() => Task.Factory.StartNew(() => presignedUrlResponse));
+            return mockApiClient.Object;
+        }
+
+        private IZipUtils CreateMockZipUtils(string zipFileFullName)
+        {
+            var mockZipUtils = new Mock<IZipUtils>();
+            mockZipUtils
+                .Setup(z => z.CreateZipFileFullName(It.IsAny<string>()))
+                .Returns(() => zipFileFullName);
+            mockZipUtils
+                .Setup(z => z.CreateZipFile(It.IsAny<string>(), It.IsAny<IEnumerable<FileInfo>>()))
+                .Callback((string a, IEnumerable<FileInfo> b) => { new ZipUtils().CreateZipFile(a, b); });
+           return mockZipUtils.Object;
         }
     }
 }
