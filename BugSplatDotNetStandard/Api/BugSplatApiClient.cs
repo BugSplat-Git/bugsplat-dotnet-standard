@@ -22,7 +22,7 @@ namespace BugSplatDotNetStandard.Api
         /// <summary>
         /// Authenticate with the BugSplat backend and persist credentials for future requests
         /// </summary>
-        Task<HttpResponseMessage> Authenticate();
+        Task<IBugSplatApiClient> Authenticate();
 
         /// <summary>
         /// Make a POST request to a route relative to Host
@@ -79,7 +79,7 @@ namespace BugSplatDotNetStandard.Api
         /// <summary>
         /// Authenticate with the BugSplat API via email and password
         /// </summary>
-        public async Task<HttpResponseMessage> Authenticate()
+        public async Task<IBugSplatApiClient> Authenticate()
         {
             var url = new Uri(Host, "/api/authenticatev3");
             var formData = new MultipartFormDataContent()
@@ -98,7 +98,7 @@ namespace BugSplatDotNetStandard.Api
             this.httpClient.DefaultRequestHeaders.Add("xsrf-token", xsrfToken);
             this.Authenticated = true;
 
-            return authenticateResponse;
+            return this;
         }
 
         /// <summary>

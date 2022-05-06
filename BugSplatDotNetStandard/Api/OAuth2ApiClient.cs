@@ -47,7 +47,7 @@ namespace BugSplatDotNetStandard.Api
         /// <summary>
         /// Authenticate with the BugSplat API via OAuth2 Client Credentials
         /// </summary>
-        public async Task<HttpResponseMessage> Authenticate()
+        public async Task<IBugSplatApiClient> Authenticate()
         {
             var url = new Uri(Host, "/oauth2/authorize");
             var formData = new MultipartFormDataContent()
@@ -70,7 +70,7 @@ namespace BugSplatDotNetStandard.Api
             this.httpClient.DefaultRequestHeaders.Add("Authorization", authorizeHeader);
             this.Authenticated = true;
 
-            return authorizeResponse;
+            return this;
         }
 
         public async Task<HttpResponseMessage> GetAsync(string route)

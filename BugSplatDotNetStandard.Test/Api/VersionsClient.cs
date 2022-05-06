@@ -1,38 +1,17 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using BugSplatDotNetStandard;
 using BugSplatDotNetStandard.Api;
 using BugSplatDotNetStandard.Http;
-using Moq;
-using Moq.Protected;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using static Tests.HttpContentVerifiers;
-using static Tests.StackTraceFactory;
 
 namespace Tests
 {
+    [TestFixture]
     public class VersionsClientTest
     {
-        private string database;
-        private string clientId;
-        private string clientSecret;
-
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            DotNetEnv.Env.Load();
-            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
-            clientId = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
-            clientSecret = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
-        }
-
+        const string database = "fred";
 
         [Test]
         public void VersionsClient_Constructor_ShouldThrowIfHttpClientFactoryIsNullOrEmpty()
@@ -52,6 +31,23 @@ namespace Tests
             var versionsClient = VersionsClient.Create(new BugSplatApiClient("fred", "******", HttpClientFactory.Default));
             Assert.True(versionsClient is VersionsClient);
         }
+    }
+
+    [TestFixture]
+    class VersionsClientIntegrationTest
+    {
+        private string database;
+        private string clientId;
+        private string clientSecret;
+
+        [OneTimeSetUp]
+        public void Setup()
+        {
+            DotNetEnv.Env.Load();
+            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
+            clientId = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
+            clientSecret = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
+        }
 
         [Test]
         public void VersionsClient_UploadSymbolsFile_ShouldUploadSymbolFile()
@@ -59,10 +55,11 @@ namespace Tests
             var application = "my-net-crasher";
             var version = Guid.NewGuid().ToString();
             var symbolFileInfo = new FileInfo("Files/myConsoleCrasher.pdb");
-            var oauth2ApiClient = OAuth2ApiClient.Create(clientId, clientSecret);
+            var oauth2ApiClient = OAuth2ApiClient.Create(clientId, clientSecret)
+                .Authenticate()
+                .Result;
             var sut = VersionsClient.Create(oauth2ApiClient);
-            var authenticateResult = oauth2ApiClient.Authenticate().Result;
-            
+
             var uploadResult = sut.UploadSymbolFile(
                 database,
                 application,

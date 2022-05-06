@@ -13,18 +13,11 @@ using static Tests.HttpContentVerifiers;
 
 namespace Tests
 {
+    [TestFixture]
     public class OAuth2ClientTest
     {
-        private string clientId;
-        private string clientSecret;
-
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            DotNetEnv.Env.Load();
-            clientId = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
-            clientSecret = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
-        }
+        const string clientId = "the_best_client";
+        private string clientSecret = "shhh_its_a_secret";
 
         [Test]
         public void OAuth2ApiClient_Constructor_ShouldThrowIfClientIdIsNullOrEmpty()
@@ -64,9 +57,10 @@ namespace Tests
             var mockHttp = CreateMockHttpClientForAuthenticateSuccess();
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
-            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory);
 
-            var result = sut.Authenticate().Result;
+            var result = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory)
+                .Authenticate()
+                .Result;
 
             mockHttp.Protected().Verify(
                 "SendAsync",
@@ -139,8 +133,9 @@ namespace Tests
             );
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
-            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory);
-            var authenticateResult = sut.Authenticate().Result;
+            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory)
+                .Authenticate()
+                .Result;
 
             var postResult = sut.PostAsync("/xyz", new MultipartFormDataContent()).Result;
 
@@ -164,8 +159,9 @@ namespace Tests
             );
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
-            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory);
-            var authenticateResult = sut.Authenticate().Result;
+            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory)
+                .Authenticate()
+                .Result;
 
             var postResult = sut.GetAsync("/xyz").Result;
 

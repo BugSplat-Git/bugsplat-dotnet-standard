@@ -3,25 +3,14 @@ using NUnit.Framework;
 using System;
 using System.IO;
 using System.Net;
+using System.Threading;
 using static Tests.StackTraceFactory;
 
 namespace Tests
 {
+    [TestFixture]
     public class BugSplatTest
     {
-        private string database;
-        private string email;
-        private string password;
-
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            DotNetEnv.Env.Load();
-            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
-            email = System.Environment.GetEnvironmentVariable("BUGSPLAT_EMAIL");
-            password = System.Environment.GetEnvironmentVariable("BUGSPLAT_PASSWORD");
-        }
-
         [Test]
         public void BugSplat_Constructor_ShouldThrowIfDatabaseIsNull()
         {
@@ -38,6 +27,51 @@ namespace Tests
         public void BugSplat_Constructor_ShouldThrowIfVersionIsNull()
         {
             Assert.Throws<ArgumentException>(() => new BugSplat("fred", "my-app", null));
+        }
+
+        [Test]
+        public void BugSplat_Post_ShouldThrowIfExIsNull()
+        {
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                Exception ex = null;
+                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+                await bugsplat.Post(ex);
+            });
+        }
+
+        [Test]
+        public void BugSplat_Post_ShouldThrowIfStackTraceFileInfoIsNull()
+        {
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                string stackTrace = null;
+                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+                await bugsplat.Post(stackTrace);
+            });
+        }
+    }
+
+    [TestFixture]
+    public class BugSplatIntegrationTest
+    {
+        private string database;
+        private string email;
+        private string password;
+
+        [OneTimeSetUp]
+        public void BeforeAll()
+        {
+            DotNetEnv.Env.Load();
+            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
+            email = System.Environment.GetEnvironmentVariable("BUGSPLAT_EMAIL");
+            password = System.Environment.GetEnvironmentVariable("BUGSPLAT_PASSWORD");
+        }
+
+        [SetUp]
+        public void BeforeEach()
+        {
+            Thread.Sleep(2000); // Prevent crash post rate limiting
         }
 
         [Test]
@@ -69,17 +103,6 @@ namespace Tests
 
                 Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             }
-        }
-
-        [Test]
-        public void BugSplat_Post_ShouldThrowIfExIsNull()
-        {
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            {
-                Exception ex = null;
-                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-                await bugsplat.Post(ex);
-            });
         }
 
         [Test]
@@ -142,17 +165,6 @@ namespace Tests
             var body = response.Content.ReadAsStringAsync().Result;
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        [Test]
-        public void BugSplat_Post_ShouldThrowIfStackTraceFileInfoIsNull()
-        {
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            {
-                string stackTrace = null;
-                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-                await bugsplat.Post(stackTrace);
-            });
         }
     }
 

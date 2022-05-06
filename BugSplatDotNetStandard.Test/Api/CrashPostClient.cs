@@ -15,19 +15,12 @@ using static Tests.StackTraceFactory;
 
 namespace Tests
 {
+    [TestFixture]
     public class CrashPostClientTest
     {
-        private string database;
+        const string database = "fred";
         const string application = "my-net-crasher";
         const string version = "1.0";
-
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            DotNetEnv.Env.Load();
-            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
-        }
-
 
         [Test]
         public void CrashPostClient_Constructor_ShouldThrowIfHttpClientFactoryIsNull()

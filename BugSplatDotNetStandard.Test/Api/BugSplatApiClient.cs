@@ -13,20 +13,12 @@ using static Tests.HttpContentVerifiers;
 
 namespace Tests
 {
+    [TestFixture]
     public class BugSplatApiClientTest
     {
-        private string database;
-        private string email;
-        private string password;
-
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            DotNetEnv.Env.Load();
-            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
-            email = System.Environment.GetEnvironmentVariable("BUGSPLAT_EMAIL");
-            password = System.Environment.GetEnvironmentVariable("BUGSPLAT_PASSWORD");
-        }
+        const string database = "fred";
+        const string email = "fred@bugsplat.com";
+        const string password = "??????";
 
         [Test]
         public void BugSplatApiClient_Constructor_ShouldThrowIfEmailIsNullOrEmpty()
@@ -134,8 +126,9 @@ namespace Tests
             var mockHttp = CreateMockHttpClientForAuthenticateSuccess(xsrfToken);
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
-            var sut = new BugSplatApiClient(email, password, httpClientFactory);
-            var authenticateResult = sut.Authenticate().Result;
+            var sut = new BugSplatApiClient(email, password, httpClientFactory)
+                .Authenticate()
+                .Result;
 
             var postResult = sut.PostAsync("/xyz", new MultipartFormDataContent()).Result;
 
@@ -144,30 +137,6 @@ namespace Tests
                 Times.Exactly(1),
                 ItExpr.Is<HttpRequestMessage>(req =>
                     req.Method == HttpMethod.Post
-                        && ContainsHeader(req.Headers, "xsrf-token", xsrfToken)
-                ),
-                ItExpr.IsAny<CancellationToken>()
-            );
-        }
-
-        [Test]
-        public void BugSplatApiClient_GetAsync_ShouldMakeRequestWithXsrfTokenHeader()
-        {
-            var xsrfToken = "xsrfTolkien!";
-            var expectedFormDataParams = new List<string>() { "name=email", email, "name=password", password };
-            var mockHttp = CreateMockHttpClientForAuthenticateSuccess(xsrfToken);
-            var httpClient = new HttpClient(mockHttp.Object);
-            var httpClientFactory = new FakeHttpClientFactory(httpClient);
-            var sut = new BugSplatApiClient(email, password, httpClientFactory);
-            var authenticateResult = sut.Authenticate().Result;
-
-            var postResult = sut.GetAsync("/xyz").Result;
-
-            mockHttp.Protected().Verify(
-                "SendAsync",
-                Times.Exactly(1),
-                ItExpr.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Get
                         && ContainsHeader(req.Headers, "xsrf-token", xsrfToken)
                 ),
                 ItExpr.IsAny<CancellationToken>()
