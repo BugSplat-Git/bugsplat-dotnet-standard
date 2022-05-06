@@ -15,7 +15,7 @@ namespace BugSplatDotNetStandard.Api
         bool Authenticated { get; }
 
         /// <summary>
-        /// The BugSplat API server location
+        /// Set BugSplat API server location for testing purposes
         /// </summary>
         Uri Host { get; set; }
 
