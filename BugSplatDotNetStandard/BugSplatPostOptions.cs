@@ -47,12 +47,12 @@ namespace BugSplatDotNetStandard
     public interface IBugSplatPostOptions
     {
         /// <summary>
-        /// A list of attachments to be added to the post that will be appended to the corresponding default value.
+        /// A list of additional attachments to be added to the post
         /// </summary>
         List<FileInfo> Attachments { get; }
 
         /// <summary>
-        /// A list of form data key value pairs that will be appended to the corresponding default value.
+        /// A list of form data key value pairs that will be appended to the corresponding default value
         /// </summary>
         List<IFormDataParam> FormDataParams { get; }
 

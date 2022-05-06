@@ -31,8 +31,7 @@ namespace BugSplatDotNetStandard.Api
         /// <summary>
         /// Create an unauthenticated VersionsClient
         /// </summary>
-        /// <param name="clientId">BugSplat OAuth2 ClientId</param>
-        /// <param name="clientSecret">BugSplat OAuth2 ClientId</param>
+        /// <param name="bugsplatApiClient">An authenticated instance of BugSplatApiClient that will be used for API requests</param>
         public static VersionsClient Create(IBugSplatApiClient bugsplatApiClient)
         {
             return new VersionsClient(bugsplatApiClient, S3ClientFactory.Default);
