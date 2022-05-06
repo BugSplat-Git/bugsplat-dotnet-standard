@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,14 +9,20 @@ using static BugSplatDotNetStandard.Utils.ArgumentContracts;
 
 namespace BugSplatDotNetStandard
 {
-    public class SymbolUploader
+    public class SymbolUploader: IDisposable
     {
         private IBugSplatApiClient bugsplatApiClient;
+        private VersionsClient versionsClient;
 
+        /// <summary>
+        /// Create a SymbolUploader via either an OAuth2 or Email/Password based IBugSplatApiClient.
+        /// </summary>
+        /// <param name="bugsplatApiClient">Either an OAuth2ApiClient or BugSplatApiClient</param>
         public SymbolUploader(IBugSplatApiClient bugsplatApiClient) {
             ThrowIfArgumentIsNull(bugsplatApiClient, "bugsplatApiClient");
 
             this.bugsplatApiClient = bugsplatApiClient;
+            this.versionsClient = VersionsClient.Create(bugsplatApiClient);
         }
 
         /// <summary>
@@ -56,10 +63,7 @@ namespace BugSplatDotNetStandard
                 await bugsplatApiClient.Authenticate();
             }
 
-            using (var versionsClient = VersionsClient.Create(bugsplatApiClient))
-            {
-                return await versionsClient.UploadSymbolFile(database, application, version, symbolFileInfo);
-            }
+            return await versionsClient.UploadSymbolFile(database, application, version, symbolFileInfo);
         }
 
         /// <summary>
@@ -83,6 +87,11 @@ namespace BugSplatDotNetStandard
                     async symbolFileInfo => await this.UploadSymbolFile(database, application, version, symbolFileInfo)
                 )
             );
+        }
+
+        public void Dispose()
+        {
+            this.versionsClient.Dispose();
         }
     }
 }
