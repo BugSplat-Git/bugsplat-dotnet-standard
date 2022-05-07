@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard.Api;
 using static BugSplatDotNetStandard.Utils.ArgumentContracts;
@@ -82,11 +83,28 @@ namespace BugSplatDotNetStandard
                 await bugsplatApiClient.Authenticate();
             }
 
-            return await Task.WhenAll(
-                symbolFileInfos.Select(
-                    async symbolFileInfo => await this.UploadSymbolFile(database, application, version, symbolFileInfo)
-                )
-            );
+            // Unity doesn't support .NET 6 yet.
+            // This can use Parallel.ForEachAsync when Unity moves to .NET 6.
+            // More info: https://github.com/dotnet/runtime/issues/53709
+            using (var semaphore = new SemaphoreSlim(10, 10))
+            {
+                return await Task.WhenAll(
+                    symbolFileInfos.Select(
+                        async (symbolFileInfo) =>
+                        {
+                            try
+                            {
+                                await semaphore.WaitAsync();
+                                return await this.versionsClient.UploadSymbolFile(database, application, version, symbolFileInfo);
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        }
+                    )
+                );
+            }
         }
 
         public void Dispose()
