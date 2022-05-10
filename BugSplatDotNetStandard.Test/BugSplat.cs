@@ -3,9 +3,12 @@ using NUnit.Framework;
 using System;
 using System.IO;
 using System.Net;
+using System.Threading;
+using static Tests.StackTraceFactory;
 
 namespace Tests
 {
+    [TestFixture]
     public class BugSplatTest
     {
         [Test]
@@ -27,6 +30,51 @@ namespace Tests
         }
 
         [Test]
+        public void BugSplat_Post_ShouldThrowIfExIsNull()
+        {
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                Exception ex = null;
+                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+                await bugsplat.Post(ex);
+            });
+        }
+
+        [Test]
+        public void BugSplat_Post_ShouldThrowIfStackTraceFileInfoIsNull()
+        {
+            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                string stackTrace = null;
+                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+                await bugsplat.Post(stackTrace);
+            });
+        }
+    }
+
+    [TestFixture]
+    public class BugSplatIntegrationTest
+    {
+        private string database;
+        private string email;
+        private string password;
+
+        [OneTimeSetUp]
+        public void BeforeAll()
+        {
+            DotNetEnv.Env.Load();
+            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
+            email = System.Environment.GetEnvironmentVariable("BUGSPLAT_EMAIL");
+            password = System.Environment.GetEnvironmentVariable("BUGSPLAT_PASSWORD");
+        }
+
+        [SetUp]
+        public void BeforeEach()
+        {
+            Thread.Sleep(2000); // Prevent crash post rate limiting
+        }
+
+        [Test]
         public void BugSplat_Post_ShouldPostExceptionToBugSplat()
         {
             try
@@ -35,7 +83,7 @@ namespace Tests
             }
             catch (Exception ex)
             {
-                var sut = new BugSplat("fred", "MyDotNetStandardCrasher", "1.0");
+                var sut = new BugSplat(database, "MyDotNetStandardCrasher", "1.0");
                 sut.ExceptionType = BugSplat.ExceptionTypeId.Unity;
                 sut.Description = "Default description - overridden";
                 sut.Email = "default@bugsplat.com - overridden";
@@ -49,7 +97,7 @@ namespace Tests
                     User = "Fred",
                     Key = "the key!"
                 };
-                options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
+                options.Attachments.Add(new FileInfo("Files/attachment.txt"));
                 var response = sut.Post(ex, options).Result;
                 var body = response.Content.ReadAsStringAsync().Result;
 
@@ -58,21 +106,10 @@ namespace Tests
         }
 
         [Test]
-        public void BugSplat_Post_ShouldThrowIfExIsNull()
-        {
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            {
-                Exception ex = null;
-                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-                await bugsplat.Post(ex);
-            });
-        }
-
-        [Test]
         public void BugSplat_Post_ShouldPostMinidumpToBugSplat()
         {
-            var sut = new BugSplat("fred", "myConsoleCrasher", "2021.4.23.0");
-            var minidumpFileInfo = new FileInfo("minidump.dmp");
+            var sut = new BugSplat(database, "myConsoleCrasher", "2022.5.2.0");
+            var minidumpFileInfo = new FileInfo("Files/minidump.dmp");
             sut.MinidumpType = BugSplat.MinidumpTypeId.WindowsNative;
             sut.Description = "Default description - overridden";
             sut.Email = "default@bugsplat.com - overridden";
@@ -86,7 +123,7 @@ namespace Tests
                 User = "Fred",
                 Key = "the key!"
             };
-            options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
+            options.Attachments.Add(new FileInfo("Files/attachment.txt"));
 
             var response = sut.Post(minidumpFileInfo, options).Result;
             var body = response.Content.ReadAsStringAsync().Result;
@@ -108,19 +145,13 @@ namespace Tests
         [Test]
         public void BugSplat_Post_ShouldPostStackTraceToBugSplat()
         {
-            var sut = new BugSplat("fred", "MyUnityCrasher", "1.0");
+            var sut = new BugSplat(database, "MyUnityCrasher", "1.0");
             sut.ExceptionType = BugSplat.ExceptionTypeId.Unity;
             sut.Description = "Default description - overridden";
             sut.Email = "default@bugsplat.com - overridden";
             sut.User = "Default - overridden";
             sut.Key = "Default - overridden";
-            var stackTrace = @"Exception: BugSplat rocks!
-                Main.ThrowException () (at Assets/Main.cs:75)
-                Main.SampleStackFrame2 () (at Assets/Main.cs:95)
-                Main.SampleStackFrame1 () (at Assets/Main.cs:90)
-                Main.SampleStackFrame0 () (at Assets/Main.cs:85)
-                Main.GenerateSampleStackFramesAndThrow () (at Assets/Main.cs:80)
-                Main.Update() (at Assets/Main.cs:69)";
+            var stackTrace = CreateStackTrace();
             var options = new ExceptionPostOptions()
             {
                 ExceptionType = BugSplat.ExceptionTypeId.UnityLegacy,
@@ -129,22 +160,11 @@ namespace Tests
                 User = "Fred",
                 Key = "the key!"
             };
-            options.AdditionalAttachments.Add(new FileInfo("attachment.txt"));
+            options.Attachments.Add(new FileInfo("Files/attachment.txt"));
             var response = sut.Post(stackTrace, options).Result;
             var body = response.Content.ReadAsStringAsync().Result;
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        [Test]
-        public void BugSplat_Post_ShouldThrowIfStackTraceFileInfoIsNull()
-        {
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            {
-                string stackTrace = null;
-                var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-                await bugsplat.Post(stackTrace);
-            });
         }
     }
 

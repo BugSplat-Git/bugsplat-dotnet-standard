@@ -263,3 +263,9 @@ __pycache__/
 # Certificates
 *.cer
 *.pfx
+
+# DotNetEnv
+.env
+
+# Test Files
+!BugSplatDotNetStandard.Test/Files/**

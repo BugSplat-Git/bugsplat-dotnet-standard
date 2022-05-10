@@ -3,6 +3,7 @@ using NUnit.Framework;
 
 namespace Tests
 {
+    [TestFixture]
     public class BugSplatUtilsTest
     {
 
@@ -12,7 +13,7 @@ namespace Tests
             var value = "BugSplat";
             var defaultValue = "SplatBugs";
 
-            var result = BugSplatUtils.GetStringValueOrDefault(value, defaultValue);
+            var result = StringUtils.GetStringValueOrDefault(value, defaultValue);
 
             Assert.AreEqual(value, result);
         }
@@ -23,7 +24,7 @@ namespace Tests
             string value = null;
             var defaultValue = "SplatBugs";
 
-            var result = BugSplatUtils.GetStringValueOrDefault(value, defaultValue);
+            var result = StringUtils.GetStringValueOrDefault(value, defaultValue);
 
             Assert.AreEqual(defaultValue, result);
         }
