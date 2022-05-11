@@ -80,7 +80,7 @@ namespace BugSplatDotNetStandard.Api
             var zipFileFullName = ZipUtils.CreateZipFileFullName(symbolFileInfo.Name);
             try
             {
-                ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
+                var zipFileInfo = ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
 
                 using (var zipFileStream = ZipUtils.CreateZipFileStream(zipFileFullName))
                 using (
@@ -88,8 +88,8 @@ namespace BugSplatDotNetStandard.Api
                         database,
                         application,
                         version,
-                        symbolFileInfo.Length,
-                        symbolFileInfo.Name
+                        zipFileInfo.Length,
+                        zipFileInfo.Name
                     )
                 )
                 {
