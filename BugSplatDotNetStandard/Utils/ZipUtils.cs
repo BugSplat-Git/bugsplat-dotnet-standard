@@ -13,7 +13,7 @@ namespace BugSplatDotNetStandard.Utils
     internal interface IZipUtils
     {
         byte[] CreateInMemoryZipFile(IEnumerable<FileInfo> files);
-        void CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files);
+        FileInfo CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files);
         string CreateZipFileFullName(string inputFileName);
         Stream CreateZipFileStream(string zipFileFullName);
         
@@ -50,7 +50,7 @@ namespace BugSplatDotNetStandard.Utils
             return zipBytes;
         }
         
-        public void CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files)
+        public FileInfo CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files)
         {
             using (var zipFile = ZipFile.Open(zipFileFullName, ZipArchiveMode.Create))
             {
@@ -59,6 +59,8 @@ namespace BugSplatDotNetStandard.Utils
                     zipFile.CreateEntryFromFile(file.FullName, file.Name);
                 }
             }
+
+            return new FileInfo(zipFileFullName);
         }
 
         public string CreateZipFileFullName(string inputFileName)

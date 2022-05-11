@@ -137,13 +137,19 @@ namespace Tests
 
         private IZipUtils CreateMockZipUtils(string zipFileFullName)
         {
+            if (File.Exists(zipFileFullName))
+            {
+                File.Delete(zipFileFullName);
+            }
+
+            var zipFileInfo = new ZipUtils().CreateZipFile(zipFileFullName, new List<FileInfo>());
             var mockZipUtils = new Mock<IZipUtils>();
             mockZipUtils
                 .Setup(z => z.CreateZipFileFullName(It.IsAny<string>()))
                 .Returns(() => zipFileFullName);
             mockZipUtils
                 .Setup(z => z.CreateZipFile(It.IsAny<string>(), It.IsAny<IEnumerable<FileInfo>>()))
-                .Callback((string a, IEnumerable<FileInfo> b) => { new ZipUtils().CreateZipFile(a, b); });
+                .Returns(zipFileInfo);
            return mockZipUtils.Object;
         }
     }
