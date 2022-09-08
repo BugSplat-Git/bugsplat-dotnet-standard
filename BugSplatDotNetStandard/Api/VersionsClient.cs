@@ -172,6 +172,7 @@ namespace BugSplatDotNetStandard.Api
 
             return await this.bugsplatApiClient.PostAsync(route, formData);
         }
+        
         private void AddFormDataOptionalSignature(MultipartFormDataContent formData, string moduleName, string signature, string lastModified)
         {
             if(!string.IsNullOrEmpty(moduleName) && !string.IsNullOrEmpty(lastModified) && !string.IsNullOrEmpty(signature))
