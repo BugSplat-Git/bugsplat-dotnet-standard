@@ -84,12 +84,12 @@ namespace BugSplatDotNetStandard.Api
             {
                 var zipFileInfo = ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
 
-                string optionalSymbolFileLastWriteTimeStr = null;
-                string optionalModuleName = null;
-                if (optionalSignature != null)
+                var optionalSymbolFileLastWriteTimeStr = string.Empty;
+                var optionalModuleName = string.Empty;
+                if (!string.IsNullOrEmpty(optionalSignature))
                 {
-                    DateTime symbolFileLastWriteTime = File.GetLastWriteTime(symbolFileInfo.FullName);
-                    long unixTime = ((DateTimeOffset)symbolFileLastWriteTime).ToUnixTimeSeconds();
+                    var symbolFileLastWriteTime = File.GetLastWriteTime(symbolFileInfo.FullName);
+                    var unixTime = ((DateTimeOffset)symbolFileLastWriteTime).ToUnixTimeSeconds();
                     optionalSymbolFileLastWriteTimeStr = unixTime.ToString();
                     optionalModuleName = symbolFileInfo.Name;
                 }
@@ -174,7 +174,7 @@ namespace BugSplatDotNetStandard.Api
         }
         private void AddFormDataOptionalSignature(MultipartFormDataContent formData, string moduleName, string signature, string lastModified)
         {
-            if( !string.IsNullOrEmpty(moduleName) && !string.IsNullOrEmpty(lastModified) && !string.IsNullOrEmpty(signature) )
+            if(!string.IsNullOrEmpty(moduleName) && !string.IsNullOrEmpty(lastModified) && !string.IsNullOrEmpty(signature))
             {
                 formData.Add(new StringContent("bsv1"), "SendPdbsVersion");
                 formData.Add(new StringContent(moduleName), "moduleName");
