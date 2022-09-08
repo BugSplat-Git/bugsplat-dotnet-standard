@@ -63,11 +63,13 @@ namespace BugSplatDotNetStandard.Api
         /// <param name="application">BugSplat application value to associate with the symbol file</param>
         /// <param name="version">BugSplat version value to associate with the symbol file</param>
         /// <param name="symbolFileInfo">The symbol file that will be uploaded to BugSplat</param>
+        /// <param name="signature">Optional, the unique symbol file signature</param>
         public async Task<HttpResponseMessage> UploadSymbolFile(
             string database,
             string application,
             string version,
-            FileInfo symbolFileInfo
+            FileInfo symbolFileInfo,
+            string optionalSignature = null
         )
         {
             ThrowIfArgumentIsNullOrEmpty(database, "database");
@@ -82,15 +84,28 @@ namespace BugSplatDotNetStandard.Api
             {
                 var zipFileInfo = ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
 
+                var optionalSymbolFileLastWriteTimeStr = string.Empty;
+                var optionalModuleName = string.Empty;
+                if (!string.IsNullOrEmpty(optionalSignature))
+                {
+                    var symbolFileLastWriteTime = File.GetLastWriteTime(symbolFileInfo.FullName);
+                    var unixTime = ((DateTimeOffset)symbolFileLastWriteTime).ToUnixTimeSeconds();
+                    optionalSymbolFileLastWriteTimeStr = unixTime.ToString();
+                    optionalModuleName = symbolFileInfo.Name;
+                }
+
                 using (var zipFileStream = ZipUtils.CreateZipFileStream(zipFileFullName))
                 using (
                     var presignedUrlResponse = await this.GetSymbolUploadUrl(
-                        database,
-                        application,
-                        version,
-                        zipFileInfo.Length,
-                        zipFileInfo.Name
-                    )
+                            database,
+                            application,
+                            version,
+                            zipFileInfo.Length,
+                            zipFileInfo.Name,
+                            optionalModuleName,
+                            optionalSymbolFileLastWriteTimeStr,
+                            optionalSignature
+                        )
                 )
                 {
                     ThrowIfHttpRequestFailed(presignedUrlResponse);
@@ -136,7 +151,10 @@ namespace BugSplatDotNetStandard.Api
             string application,
             string version,
             long symbolFileSize,
-            string symbolFileName
+            string symbolFileName,
+            string moduleName = null,
+            string lastModified = null,
+            string signature = null
         )
         {
             var route = "/api/versions";
@@ -150,7 +168,20 @@ namespace BugSplatDotNetStandard.Api
                 { new StringContent(symbolFileName), "symFileName" },
             };
 
+            AddFormDataOptionalSignature(formData, moduleName, signature, lastModified);
+
             return await this.bugsplatApiClient.PostAsync(route, formData);
+        }
+        
+        private void AddFormDataOptionalSignature(MultipartFormDataContent formData, string moduleName, string signature, string lastModified)
+        {
+            if(!string.IsNullOrEmpty(moduleName) && !string.IsNullOrEmpty(lastModified) && !string.IsNullOrEmpty(signature))
+            {
+                formData.Add(new StringContent("bsv1"), "SendPdbsVersion");
+                formData.Add(new StringContent(moduleName), "moduleName");
+                formData.Add(new StringContent(lastModified), "lastModified");
+                formData.Add(new StringContent(signature), "dbgId");
+            }
         }
     }
 }
