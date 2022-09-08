@@ -69,7 +69,7 @@ namespace BugSplatDotNetStandard.Api
             string application,
             string version,
             FileInfo symbolFileInfo,
-            string signature = null
+            string optionalSignature = null
         )
         {
             ThrowIfArgumentIsNullOrEmpty(database, "database");
@@ -84,14 +84,14 @@ namespace BugSplatDotNetStandard.Api
             {
                 var zipFileInfo = ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
 
-                string unixTimeStr = null;
-                string moduleName = null;
-                if (signature != null)
+                string optionalSymbolFileLastWriteTimeStr = null;
+                string optionalModuleName = null;
+                if (optionalSignature != null)
                 {
-                    DateTime dt = File.GetLastWriteTime(symbolFileInfo.FullName);
-                    long unixTime = ((DateTimeOffset)dt).ToUnixTimeSeconds();
-                    unixTimeStr = unixTime.ToString();
-                    moduleName = symbolFileInfo.Name;
+                    DateTime symbolFileLastWriteTime = File.GetLastWriteTime(symbolFileInfo.FullName);
+                    long unixTime = ((DateTimeOffset)symbolFileLastWriteTime).ToUnixTimeSeconds();
+                    optionalSymbolFileLastWriteTimeStr = unixTime.ToString();
+                    optionalModuleName = symbolFileInfo.Name;
                 }
 
                 using (var zipFileStream = ZipUtils.CreateZipFileStream(zipFileFullName))
@@ -102,9 +102,9 @@ namespace BugSplatDotNetStandard.Api
                             version,
                             zipFileInfo.Length,
                             zipFileInfo.Name,
-                            moduleName,
-                            unixTimeStr,
-                            signature
+                            optionalModuleName,
+                            optionalSymbolFileLastWriteTimeStr,
+                            optionalSignature
                         )
                 )
                 {
