@@ -174,7 +174,7 @@ namespace BugSplatDotNetStandard.Api
         }
         private void AddFormDataOptionalSignature(MultipartFormDataContent formData, string moduleName, string signature, string lastModified)
         {
-            if(moduleName != null && signature != null && lastModified != null )
+            if( !string.IsNullOrEmpty(moduleName) && !string.IsNullOrEmpty(lastModified) && !string.IsNullOrEmpty(signature) )
             {
                 formData.Add(new StringContent("bsv1"), "SendPdbsVersion");
                 formData.Add(new StringContent(moduleName), "moduleName");
