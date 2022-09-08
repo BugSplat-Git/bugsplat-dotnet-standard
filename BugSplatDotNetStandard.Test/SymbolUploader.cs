@@ -70,7 +70,7 @@ namespace Tests
         {
             var sut = SymbolUploader.CreateSymbolUploader(email, password);
             var symbolFileInfo = new FileInfo("Files/myConsoleCrasher.exe");
-            var response = sut.UploadSymbolFileWithSignature(
+            var response = sut.UploadSymbolFile(
                 database,
                 "myConsoleCrasher",
                 "2022.5.2.0",
