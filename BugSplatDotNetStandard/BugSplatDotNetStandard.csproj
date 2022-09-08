@@ -6,16 +6,16 @@
     <Company>BugSplat</Company>
     <Authors>Bobby Galli</Authors>
     <Description>BugSplat crash reporting for .NET Standard 2.0 platforms. For .NET Framework 3.5+ crash reporting see https://www.bugsplat.com/docs/platforms/dot-net.</Description>
-    <Copyright>© 2022 BugSplat</Copyright>
+    <Copyright>Copyright BugSplat, All Rights Reserved</Copyright>
     <PackageProjectUrl>https://www.bugsplat.com</PackageProjectUrl>
     <PackageTags>bugsplat crash reporting reporter unhandled exception error catch analytics debug debugging debugger stack trace line numbers net uwp core mono unity xamarin maui</PackageTags>
-    <AssemblyVersion>3.0.1.0</AssemblyVersion>
-    <FileVersion>3.0.1.0</FileVersion>
+    <AssemblyVersion>3.1.0.0</AssemblyVersion>
+    <FileVersion>3.1.0.0</FileVersion>
     <PackageIconUrl></PackageIconUrl>
-    <RepositoryUrl>https://github.com/BugSplat-Git/bugsplat-net-standard</RepositoryUrl>
+    <RepositoryUrl>https://github.com/BugSplat-Git/bugsplat-dotnet-standard</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>3.0.1</Version>
-    <PackageReleaseNotes>Adds support for symbol uploads.</PackageReleaseNotes>
+    <Version>3.1.0</Version>
+    <PackageReleaseNotes>Adds support for symbol file signatures</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
