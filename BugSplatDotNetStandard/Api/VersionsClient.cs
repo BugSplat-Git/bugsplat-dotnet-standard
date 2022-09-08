@@ -152,7 +152,7 @@ namespace BugSplatDotNetStandard.Api
             string version,
             long symbolFileSize,
             string symbolFileName,
-            string moduleName,
+            string moduleName = null,
             string lastModified = null,
             string signature = null
         )
