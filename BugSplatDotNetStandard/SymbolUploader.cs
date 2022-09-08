@@ -107,6 +107,24 @@ namespace BugSplatDotNetStandard
             }
         }
 
+        /// <summary>
+        /// Upload a symbol file to BugSplat
+        /// </summary>
+        /// <param name="database">BugSplat database to upload symbols too</param>
+        /// <param name="application">BugSplat application value to associate with the symbol file</param>
+        /// <param name="version">BugSplat version value to associate with the symbol file</param>
+        /// <param name="symbolFileInfo">The symbol file that will be uploaded to BugSplat</param>
+        /// <param name="signautre">The unique symbol file signature</param>
+        public async Task<HttpResponseMessage> UploadSymbolFileWithSignature(string database, string application, string version, FileInfo symbolFileInfo, string signature)
+        {
+            if (!bugsplatApiClient.Authenticated)
+            {
+                await bugsplatApiClient.Authenticate();
+            }
+
+            return await versionsClient.UploadSymbolFileWithSignature(database, application, version, symbolFileInfo, signature);
+        }
+
         public void Dispose()
         {
             this.versionsClient.Dispose();

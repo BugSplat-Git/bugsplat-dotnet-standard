@@ -32,7 +32,7 @@ namespace Tests
             var sut = SymbolUploader.CreateSymbolUploader(email, password);
             var symbolFileInfo = new FileInfo("Files/myConsoleCrasher.exe");
             var response = sut.UploadSymbolFile(
-                "fred",
+                database,
                 "myConsoleCrasher",
                 "2022.5.2.0",
                 symbolFileInfo
@@ -52,7 +52,7 @@ namespace Tests
                 new FileInfo("Files/myConsoleCrasher.pdb")
             };
             var responses = sut.UploadSymbolFiles(
-                "fred",
+                database,
                 "myConsoleCrasher",
                 "2022.5.2.0",
                 symbolFileInfos
@@ -63,6 +63,23 @@ namespace Tests
                 var body = response.Content.ReadAsStringAsync().Result;
                 Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             }
+        }
+
+        [Test]
+        public void SymbolUploader_UploadSymbolFileWithSignature_ShouldUploadSymbolFileToBugSplat()
+        {
+            var sut = SymbolUploader.CreateSymbolUploader(email, password);
+            var symbolFileInfo = new FileInfo("Files/myConsoleCrasher.exe");
+            var response = sut.UploadSymbolFileWithSignature(
+                database,
+                "myConsoleCrasher",
+                "2022.5.2.0",
+                symbolFileInfo,
+                "62702A2F26000"
+            ).Result;
+            var body = response.Content.ReadAsStringAsync().Result;
+
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         }
     }
 }

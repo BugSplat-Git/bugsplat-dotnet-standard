@@ -109,6 +109,67 @@ namespace BugSplatDotNetStandard.Api
             }
         }
 
+        /// <summary>
+        /// Upload a symbol file to BugSplat and authenticate if not already authenticated
+        /// </summary>
+        /// <param name="database">BugSplat database to upload symbols too</param>
+        /// <param name="application">BugSplat application value to associate with the symbol file</param>
+        /// <param name="version">BugSplat version value to associate with the symbol file</param>
+        /// <param name="symbolFileInfo">The symbol file that will be uploaded to BugSplat</param>
+        /// <param name="signature">The unique signature of the symbol file that will be uploaded to BugSplat</param>
+        public async Task<HttpResponseMessage> UploadSymbolFileWithSignature(
+            string database,
+            string application,
+            string version,
+            FileInfo symbolFileInfo,
+            string dbgId
+        )
+        {
+            ThrowIfArgumentIsNullOrEmpty(database, "database");
+            ThrowIfArgumentIsNullOrEmpty(application, "application");
+            ThrowIfArgumentIsNullOrEmpty(version, "version");
+            ThrowIfArgumentIsNull(symbolFileInfo, "symbolFileInfo");
+            ThrowIfArgumentIsNull(dbgId, "symbolFileInfo");
+
+            ThrowIfNotAuthenticated(bugsplatApiClient);
+
+            DateTime dt = File.GetLastWriteTime(symbolFileInfo.FullName);
+            long unixTime = ((DateTimeOffset)dt).ToUnixTimeSeconds();
+
+            var zipFileFullName = ZipUtils.CreateZipFileFullName(symbolFileInfo.Name);
+            try
+            {
+                var zipFileInfo = ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
+
+                using (var zipFileStream = ZipUtils.CreateZipFileStream(zipFileFullName))
+                using (
+                    var presignedUrlResponse = await this.GetSymbolUploadUrl(
+                        database,
+                        application,
+                        version,
+                        zipFileInfo.Length,
+                        zipFileInfo.Name,
+                        symbolFileInfo.Name,
+                        unixTime.ToString(),
+                        dbgId
+                    )
+                )
+                {
+                    ThrowIfHttpRequestFailed(presignedUrlResponse);
+
+                    var presignedUrl = await this.GetPresignedUrlFromResponse(presignedUrlResponse);
+                    var uploadFileResponse = await s3Client.UploadFileStreamToPresignedURL(presignedUrl, zipFileStream);
+
+                    ThrowIfHttpRequestFailed(uploadFileResponse);
+
+                    return uploadFileResponse;
+                }
+            }
+            finally
+            {
+                File.Delete(zipFileFullName);
+            }
+        }
         public void Dispose()
         {
             this.s3Client.Dispose();
@@ -136,7 +197,10 @@ namespace BugSplatDotNetStandard.Api
             string application,
             string version,
             long symbolFileSize,
-            string symbolFileName
+            string symbolFileName,
+            string moduleName = null,
+            string lastModified = null,
+            string dbgId = null
         )
         {
             var route = "/api/versions";
@@ -149,6 +213,15 @@ namespace BugSplatDotNetStandard.Api
                 { new StringContent(size), "size" },
                 { new StringContent(symbolFileName), "symFileName" },
             };
+
+            // Look for optional symbol file signature parameters
+            if(moduleName != null && dbgId != null && lastModified != null )
+            {
+                formData.Add(new StringContent("bsv1"), "SendPdbsVersion");
+                formData.Add(new StringContent(moduleName), "moduleName");
+                formData.Add(new StringContent(lastModified), "lastModified");
+                formData.Add(new StringContent(dbgId), "dbgId");
+            }
 
             return await this.bugsplatApiClient.PostAsync(route, formData);
         }
