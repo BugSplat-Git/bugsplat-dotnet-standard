@@ -69,7 +69,7 @@ namespace BugSplatDotNetStandard.Api
             string application,
             string version,
             FileInfo symbolFileInfo,
-            string signature=null
+            string signature = null
         )
         {
             ThrowIfArgumentIsNullOrEmpty(database, "database");
@@ -86,7 +86,7 @@ namespace BugSplatDotNetStandard.Api
 
                 string unixTimeStr = null;
                 string moduleName = null;
-                if (signature != null )
+                if (signature != null)
                 {
                     DateTime dt = File.GetLastWriteTime(symbolFileInfo.FullName);
                     long unixTime = ((DateTimeOffset)dt).ToUnixTimeSeconds();
@@ -168,7 +168,12 @@ namespace BugSplatDotNetStandard.Api
                 { new StringContent(symbolFileName), "symFileName" },
             };
 
-            // Look for optional symbol file signature parameters
+            AddFormDataOptionalSignature(formData, moduleName, signature, lastModified);
+
+            return await this.bugsplatApiClient.PostAsync(route, formData);
+        }
+        private void AddFormDataOptionalSignature(MultipartFormDataContent formData, string moduleName, string signature, string lastModified)
+        {
             if(moduleName != null && signature != null && lastModified != null )
             {
                 formData.Add(new StringContent("bsv1"), "SendPdbsVersion");
@@ -176,8 +181,6 @@ namespace BugSplatDotNetStandard.Api
                 formData.Add(new StringContent(lastModified), "lastModified");
                 formData.Add(new StringContent(signature), "dbgId");
             }
-
-            return await this.bugsplatApiClient.PostAsync(route, formData);
         }
     }
 }
