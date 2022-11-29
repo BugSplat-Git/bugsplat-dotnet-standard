@@ -1,15 +1,10 @@
-[![bugsplat-github-banner-basic-outline](https://user-images.githubusercontent.com/20464226/149019306-3186103c-5315-4dad-a499-4fd1df408475.png)](https://bugsplat.com)
-<br/>
-# <div align="center">BugSplat</div> 
-### **<div align="center">Crash and error reporting built for busy developers.</div>**
-<div align="center">
-    <a href="https://twitter.com/BugSplatCo">
-        <img alt="Follow @bugsplatco on Twitter" src="https://img.shields.io/twitter/follow/bugsplatco?label=Follow%20BugSplat&style=social">
-    </a>
-    <a href="https://discord.gg/K4KjjRV5ve">
-        <img alt="Join BugSplat on Discord" src="https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social">
-    </a>
-</div>
+[![BugSplat Banner Image](https://user-images.githubusercontent.com/20464226/149019306-3186103c-5315-4dad-a499-4fd1df408475.png)](https://bugsplat.com)
+
+# BugSplat
+### **Crash and error reporting built for busy developers.**
+
+[![Follow @bugsplatco on Twitter](https://img.shields.io/twitter/follow/bugsplatco?label=Follow%20BugSplat&style=social)](https://twitter.com/bugsplatco)
+[![Join BugSplat on Discord](https://img.shields.io/discord/664965194799251487?label=Join%20Discord&logo=Discord&style=social)](https://discord.gg/bugsplat)
 
 ## 👋 Introduction
 
@@ -85,11 +80,11 @@ await bugsplat.Post(ex, options);
 
 Once you've generated an error, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have to correct database selected in the dropdown menu. You should see a new crash report under the **Recent Crashes** section:
 
-<img width="1727" alt="BugSplat Dashboard Page" src="https://user-images.githubusercontent.com/2646053/165813342-289ab25d-90fa-4110-8922-8bbdab687803.png">
+![BugSplat Dashboard Page](https://user-images.githubusercontent.com/2646053/165813342-289ab25d-90fa-4110-8922-8bbdab687803.png)
 
  Click the link in the **ID** column to see details about the crash:
 
-<img width="1712" alt="BugSplat Crash Page" src="https://user-images.githubusercontent.com/2646053/165813564-0d81640f-235e-4dd0-b19f-522493fd92d7.png">
+![BugSplat Crash Page](https://user-images.githubusercontent.com/2646053/165813564-0d81640f-235e-4dd0-b19f-522493fd92d7.png)
 
 That’s it! Your application is now configured to post crash reports to BugSplat.
 
