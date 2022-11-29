@@ -4,18 +4,18 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>BugSplat</Company>
-    <Authors>Bobby Galli</Authors>
-    <Description>BugSplat crash reporting for .NET Standard 2.0 platforms. For .NET Framework 3.5+ crash reporting see https://www.bugsplat.com/docs/platforms/dot-net.</Description>
+    <Authors>BugSplat</Authors>
+    <Description>BugSplat crash reporting for .NET Standard 2.0 platforms. For .NET Framework crash reporting see https://docs.bugsplat.com/introduction/getting-started/integrations/desktop/windows-dot-net-framework.</Description>
     <Copyright>Copyright BugSplat, All Rights Reserved</Copyright>
     <PackageProjectUrl>https://www.bugsplat.com</PackageProjectUrl>
     <PackageTags>bugsplat crash reporting reporter unhandled exception error catch analytics debug debugging debugger stack trace line numbers net uwp core mono unity xamarin maui</PackageTags>
-    <AssemblyVersion>3.1.0.0</AssemblyVersion>
-    <FileVersion>3.1.0.0</FileVersion>
+    <AssemblyVersion>3.1.1.0</AssemblyVersion>
+    <FileVersion>3.1.1.0</FileVersion>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/BugSplat-Git/bugsplat-dotnet-standard</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>3.1.0</Version>
-    <PackageReleaseNotes>Adds support for symbol file signatures</PackageReleaseNotes>
+    <Version>3.1.1</Version>
+    <PackageReleaseNotes>Update README so it looks better on NuGet</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
