@@ -25,6 +25,7 @@ namespace BugSplatDotNetStandard
         public string Email { get; set; } = string.Empty;
         public string Key { get; set; } = string.Empty;
         public string IpAddress { get; set; } = string.Empty;
+        public string Notes { get; set; } = string.Empty;
         public string User { get; set; } = string.Empty;
     }
 
@@ -75,6 +76,11 @@ namespace BugSplatDotNetStandard
         /// An IP Address to be added to the post that overrides the corresponding default value
         /// </summary>
         string IpAddress { get; set; }
+
+        /// <summary>
+        /// An general purpose column for extra crash metadata
+        /// </summary>
+        string Notes { get; set; }
 
         /// <summary>
         /// A user to be added to the post that overrides the corresponding default value

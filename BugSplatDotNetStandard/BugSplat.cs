@@ -55,6 +55,11 @@ namespace BugSplatDotNetStandard
         public MinidumpTypeId MinidumpType { get; set; } = MinidumpTypeId.WindowsNative;
 
         /// <summary>
+        /// An general purpose column for extra crash metadata
+        /// </summary>
+        public string Notes { get; set; }
+
+        /// <summary>
         /// A default user added to the upload that can be overridden at post time
         /// </summary>
         public string User { get; set; } = string.Empty;

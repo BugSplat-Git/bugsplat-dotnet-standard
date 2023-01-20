@@ -89,13 +89,15 @@ namespace Tests
                 sut.Email = "default@bugsplat.com - overridden";
                 sut.User = "Default - overridden";
                 sut.Key = "Default - overridden";
+                sut.Notes = "Default - overridden";
                 var options = new ExceptionPostOptions()
                 {
                     ExceptionType = BugSplat.ExceptionTypeId.DotNetStandard,
                     Description = "BugSplat rocks!",
                     Email = "fred@bugsplat.com",
                     User = "Fred",
-                    Key = "the key!"
+                    Key = "the key!",
+                    Notes = "the notes!"
                 };
                 options.Attachments.Add(new FileInfo("Files/attachment.txt"));
                 var response = sut.Post(ex, options).Result;
@@ -115,13 +117,15 @@ namespace Tests
             sut.Email = "default@bugsplat.com - overridden";
             sut.User = "Default - overridden";
             sut.Key = "Default - overridden";
+            sut.Notes = "Default - overridden";
             var options = new MinidumpPostOptions()
             {
                 MinidumpType = BugSplat.MinidumpTypeId.UnityNativeWindows,
                 Description = "BugSplat rocks!",
                 Email = "fred@bugsplat.com",
                 User = "Fred",
-                Key = "the key!"
+                Key = "the key!",
+                Notes = "the notes!"
             };
             options.Attachments.Add(new FileInfo("Files/attachment.txt"));
 
@@ -151,6 +155,7 @@ namespace Tests
             sut.Email = "default@bugsplat.com - overridden";
             sut.User = "Default - overridden";
             sut.Key = "Default - overridden";
+            sut.Notes = "Default - overridden";
             var stackTrace = CreateStackTrace();
             var options = new ExceptionPostOptions()
             {
@@ -158,7 +163,8 @@ namespace Tests
                 Description = "BugSplat rocks!",
                 Email = "fred@bugsplat.com",
                 User = "Fred",
-                Key = "the key!"
+                Key = "the key!",
+                Notes = "the notes!"
             };
             options.Attachments.Add(new FileInfo("Files/attachment.txt"));
             var response = sut.Post(stackTrace, options).Result;

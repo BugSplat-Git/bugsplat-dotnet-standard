@@ -193,6 +193,7 @@ namespace BugSplatDotNetStandard.Api
             var description = GetStringValueOrDefault(overrideOptions?.Description, defaultOptions.Description);
             var email = GetStringValueOrDefault(overrideOptions?.Email, defaultOptions.Email);
             var key = GetStringValueOrDefault(overrideOptions?.Key, defaultOptions.Key);
+            var notes = GetStringValueOrDefault(overrideOptions?.Notes, defaultOptions?.Notes);
             var user = GetStringValueOrDefault(overrideOptions?.User, defaultOptions.User);
 
             var body = new MultipartFormDataContent
@@ -203,7 +204,8 @@ namespace BugSplatDotNetStandard.Api
                 { new StringContent(description), "description" },
                 { new StringContent(email), "email" },
                 { new StringContent(key), "appKey" },
-                { new StringContent(user), "user" }
+                { new StringContent(notes), "notes" },
+                { new StringContent(user), "user" },
             };
 
             var formDataParams = overrideOptions?.FormDataParams ?? new List<IFormDataParam>();
