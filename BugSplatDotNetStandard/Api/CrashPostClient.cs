@@ -47,7 +47,7 @@ namespace BugSplatDotNetStandard.Api
                 .Select(attachment => InMemoryFile.FromFileInfo(attachment))
                 .ToList();
 
-            files.Add(new InMemoryFile() { FileName = "Callstack.txt", Content = Encoding.ASCII.GetBytes(stackTrace) });
+            files.Add(new InMemoryFile() { FileName = "Callstack.txt", Content = Encoding.UTF8.GetBytes(stackTrace) });
 
             var zipBytes = ZipUtils.CreateInMemoryZipFile(files);
             using (
