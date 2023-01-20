@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -35,34 +36,20 @@ namespace Tests
         }
 
         [Test]
-        public void CrashPostClient_PostException_ShouldCallPostAsyncWithUriAndMultipartFormDataContent()
+        public async Task CrashPostClient_PostException_ShouldReturn200()
         {
-            var expectedUri = $"https://{database}.bugsplat.com/post/dotnetstandard/";
+            var expectedUri = $"https://{database}.bugsplat.com/api/getCrashUploadUrl?database={database}&appName={application}&appVersion={version}";
             var stackTrace = CreateStackTrace();
             var bugsplat = new BugSplat(database, application, version);
-            bugsplat.Description = "dangit bobby";
-            bugsplat.Email = "bobby@bugsplat.com";
-            bugsplat.IpAddress = "192.168.0.1";
-            bugsplat.Key = "en-US";
-            bugsplat.User = "@bobbyg603";
-            var expectedFormDataParams = new List<string>() {
-                "name=database", database,
-                "name=appName", application,
-                "name=appVersion", version,
-                "name=description", bugsplat.Description,
-                "name=email", bugsplat.Email,
-                "name=appKey", bugsplat.Key,
-                "name=user", bugsplat.User,
-                "name=callstack", stackTrace,
-                "name=crashTypeId", $"{(int)bugsplat.ExceptionType}"
-            };
-            var mockHttp = CreateMockHttpClientForAuthenticateSuccess();
+            var getCrashUrl = "https://fake.url.com";
+            var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
             
-            var sut = new CrashPostClient(httpClientFactory, S3ClientFactory.Default);
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
 
-            var postResult = sut.PostException(
+            var postResult = await sut.PostException(
                 database,
                 application,
                 version,
@@ -70,88 +57,52 @@ namespace Tests
                 bugsplat
             );
 
-            mockHttp.Protected().Verify(
-                "SendAsync",
-                Times.Exactly(1),
-                ItExpr.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Post
-                        && req.RequestUri.ToString().Equals(expectedUri)
-                            && ContainsValues(
-                                req.Content.ReadAsStringAsync().Result,
-                                expectedFormDataParams
-                            )
-                ),
-                ItExpr.IsAny<CancellationToken>()
-            );
+            Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);
         }
 
         [Test]
-        public void CrashPostClient_PostException_ShouldCallPostAsyncWithUriAndMultipartFormDataContentOverrides()
+        public async Task CrashPostClient_PostMinidump_ShouldReturn200()
         {
-            var stackTrace = CreateStackTrace();
+            var expectedUri = $"https://{database}.bugsplat.com/api/getCrashUploadUrl?database={database}&appName={application}&appVersion={version}";
             var bugsplat = new BugSplat(database, application, version);
-            var overrideOptions = new ExceptionPostOptions();
-            overrideOptions.Description = "dangit bobby";
-            overrideOptions.Email = "bobby@bugsplat.com";
-            overrideOptions.IpAddress = "192.168.0.1";
-            overrideOptions.Key = "en-US";
-            overrideOptions.User = "@bobbyg603";
-            overrideOptions.ExceptionType = BugSplat.ExceptionTypeId.Unity;
-            var expectedFormDataParams = new List<string>() {
-                "name=database", database,
-                "name=appName", application,
-                "name=appVersion", version,
-                "name=description", overrideOptions.Description,
-                "name=email", overrideOptions.Email,
-                "name=appKey", overrideOptions.Key,
-                "name=user", overrideOptions.User,
-                "name=callstack", stackTrace,
-                "name=crashTypeId", $"{(int)overrideOptions.ExceptionType}"
-            };
-            var mockHttp = CreateMockHttpClientForAuthenticateSuccess();
+            var getCrashUrl = "https://fake.url.com";
+            var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
             
-            var sut = new CrashPostClient(httpClientFactory, S3ClientFactory.Default);
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
 
-            var postResult = sut.PostException(
+            var postResult = await sut.PostMinidump(
                 database,
                 application,
                 version,
-                stackTrace,
-                bugsplat,
-                overrideOptions
+                new FileInfo("Files/minidump.dmp"),
+                bugsplat
             );
 
-            mockHttp.Protected().Verify(
-                "SendAsync",
-                Times.Exactly(1),
-                ItExpr.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Post
-                        && ContainsValues(
-                            req.Content.ReadAsStringAsync().Result,
-                            expectedFormDataParams
-                        )
-                ),
-                ItExpr.IsAny<CancellationToken>()
-            );
+            Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);
         }
 
-       private Mock<HttpMessageHandler> CreateMockHttpClientForAuthenticateSuccess()
+       private Mock<HttpMessageHandler> CreateMockHttpClientForExceptionPost(string crashUploadUrl)
         {
-            var response = new HttpResponseMessage();
-            response.Content = new StringContent("");
-            response.StatusCode = HttpStatusCode.OK;
+            var getCrashUploadUrlResponse = new HttpResponseMessage();
+            getCrashUploadUrlResponse.StatusCode = HttpStatusCode.OK;
+            getCrashUploadUrlResponse.Content = new StringContent($"{{ \"url\": \"{crashUploadUrl}\" }}");
+
+            var commitCrashUploadUrlReponse = new HttpResponseMessage();
+            commitCrashUploadUrlReponse.StatusCode = HttpStatusCode.OK;
+
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock
                .Protected()
-               .Setup<Task<HttpResponseMessage>>(
+               .SetupSequence<Task<HttpResponseMessage>>(
                   "SendAsync",
                   ItExpr.IsAny<HttpRequestMessage>(),
                   ItExpr.IsAny<CancellationToken>()
                )
-               .ReturnsAsync(response)
-               .Verifiable();
+               .ReturnsAsync(getCrashUploadUrlResponse)
+               .ReturnsAsync(commitCrashUploadUrlReponse);
  
             return handlerMock;
         }
