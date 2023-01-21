@@ -25,12 +25,12 @@ namespace BugSplatDotNetStandard
         public ExceptionTypeId ExceptionType { get; set; } = ExceptionTypeId.DotNetStandard;
 
         /// <summary>
-        /// A default description added to the upload that can be overriden at post time
+        /// A default description added to the upload that can be overridden at post time
         /// </summary>
         public string Description { get; set; } = string.Empty;
 
         /// <summary>
-        /// A default email added to the upload that can be overriden at post time
+        /// A default email added to the upload that can be overridden at post time
         /// </summary>
         public string Email { get; set; } = string.Empty;
 
@@ -40,12 +40,12 @@ namespace BugSplatDotNetStandard
         public List<IFormDataParam> FormDataParams { get; } = new List<IFormDataParam>();
 
         /// <summary>
-        /// A default key added to the upload that can be overriden at post time
+        /// A default key added to the upload that can be overridden at post time
         /// </summary>
         public string Key { get; set; } = string.Empty;
 
         /// <summary>
-        /// A default IP Address value added to the upload that can be overriden at post time
+        /// A default IP Address value added to the upload that can be overridden at post time
         /// </summary>
         public string IpAddress { get; set; } = string.Empty;
 
@@ -55,7 +55,12 @@ namespace BugSplatDotNetStandard
         public MinidumpTypeId MinidumpType { get; set; } = MinidumpTypeId.WindowsNative;
 
         /// <summary>
-        /// A default user added to the upload that can be overriden at post time
+        /// An general purpose column for extra crash metadata
+        /// </summary>
+        public string Notes { get; set; } = string.Empty;
+
+        /// <summary>
+        /// A default user added to the upload that can be overridden at post time
         /// </summary>
         public string User { get; set; } = string.Empty;
 

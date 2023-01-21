@@ -91,7 +91,7 @@ namespace Tests
             var zipFileFullName = "test.zip";
             var symbolFileInfo = new FileInfo("Files/myConsoleCrasher.pdb");
             var mockApiClient = CreateMockBugSplatApiClient();
-            var mockS3ClientFactory = CreateMockS3ClientFactory();
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
             var mockZipUtils = CreateMockZipUtils(zipFileFullName);
             var sut = new VersionsClient(mockApiClient, mockS3ClientFactory);
             sut.ZipUtils = mockZipUtils;
@@ -106,19 +106,6 @@ namespace Tests
             Assert.False(File.Exists(zipFileFullName));
         }
 
-        private IS3ClientFactory CreateMockS3ClientFactory()
-        {
-            var s3Response = new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK
-            };
-            var mockS3Client = new Mock<IS3Client>();
-            mockS3Client
-                .Setup(s => s.UploadFileStreamToPresignedURL(It.IsAny<Uri>(), It.IsAny<Stream>()))
-                .Returns(() => Task.Factory.StartNew(() => s3Response));
-            return new FakeS3ClientFactory(mockS3Client.Object);
-        }
-
         private IBugSplatApiClient CreateMockBugSplatApiClient()
         {
             var presignedUrlResponse = new HttpResponseMessage()
@@ -131,7 +118,7 @@ namespace Tests
                 .Returns(true);
             mockApiClient
                 .Setup(c => c.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>()))
-                .Returns(() => Task.Factory.StartNew(() => presignedUrlResponse));
+                .ReturnsAsync(presignedUrlResponse);
             return mockApiClient.Object;
         }
 
@@ -146,7 +133,7 @@ namespace Tests
             var mockZipUtils = new Mock<IZipUtils>();
             mockZipUtils
                 .Setup(z => z.CreateZipFileFullName(It.IsAny<string>()))
-                .Returns(() => zipFileFullName);
+                .Returns(zipFileFullName);
             mockZipUtils
                 .Setup(z => z.CreateZipFile(It.IsAny<string>(), It.IsAny<IEnumerable<FileInfo>>()))
                 .Returns(zipFileInfo);
