@@ -57,7 +57,7 @@ namespace BugSplatDotNetStandard
         /// <summary>
         /// An general purpose column for extra crash metadata
         /// </summary>
-        public string Notes { get; set; }
+        public string Notes { get; set; } = string.Empty;
 
         /// <summary>
         /// A default user added to the upload that can be overridden at post time
