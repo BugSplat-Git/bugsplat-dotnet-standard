@@ -31,7 +31,7 @@ After you've installed the NuGet package, add a using statement for the `BugSpla
 using BugSplatDotNetStandard;
 ```
 
-Create a new instance of `BugSplat` providing it your database, application, and version. It's best to do this at the entry point of your application. Several defaults can be provided to BugSplat. You can provide default values for things such as description, email, key, user and file attachments.
+Create a new instance of `BugSplat` providing it your database, application, and version. It's best to do this at the entry point of your application. Several defaults can be provided to BugSplat. You can provide default values for things such as description, email, key, notes, user and file attachments.
 
 ```cs
 var bugsplat = new BugSplat(database, application, version);
@@ -39,6 +39,7 @@ bugsplat.Attachments.Add(new FileInfo("/path/to/attachment.txt"));
 bugsplat.Description = "the default description";
 bugsplat.Email = "fred@bugsplat.com";
 bugsplat.Key = "the key!";
+bugsplat.Notes = "the notes!";
 bugsplat.User = "Fred";
 ```
 
