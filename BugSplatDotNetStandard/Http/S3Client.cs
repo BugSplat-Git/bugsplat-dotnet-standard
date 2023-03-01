@@ -35,6 +35,7 @@ namespace BugSplatDotNetStandard.Http
         public S3Client (IHttpClientFactory factory)
         {
             this.httpClient = factory.CreateClient();
+            this.httpClient.Timeout = System.Threading.Timeout.InfiniteTimeSpan;
         }
         public async Task<HttpResponseMessage> UploadFileBytesToPresignedURL(Uri uri, byte[] bytes)
         {
