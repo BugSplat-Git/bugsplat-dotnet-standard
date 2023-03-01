@@ -112,15 +112,11 @@ namespace BugSplatDotNetStandard.Api
 
                     var presignedUrl = await this.GetPresignedUrlFromResponse(presignedUrlResponse);
                     var uploadFileResponse = await s3Client.UploadFileStreamToPresignedURL(presignedUrl, zipFileStream);
-                       
+
                     ThrowIfHttpRequestFailed(uploadFileResponse);
 
                     return uploadFileResponse;
                 }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to upload file: " + ex.Message);
             }
             finally
             {
