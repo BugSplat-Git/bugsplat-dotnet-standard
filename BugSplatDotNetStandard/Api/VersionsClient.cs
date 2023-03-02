@@ -142,7 +142,7 @@ namespace BugSplatDotNetStandard.Api
             }
             catch (Exception ex)
             {
-                throw new Exception("Failed to parse symnbol upload url", ex);
+                throw new Exception("Failed to parse symbol upload url", ex);
             }
         }
 
