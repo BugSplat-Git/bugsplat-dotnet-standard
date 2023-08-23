@@ -50,9 +50,9 @@ namespace Tests
         public void Setup()
         {
             DotNetEnv.Env.Load();
-            database = System.Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
-            clientId = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
-            clientSecret = System.Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
+            database = Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
+            clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
+            clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
         }
 
         [Test]

@@ -31,7 +31,7 @@ namespace BugSplatDotNetStandard.Api
         }
 
         /// <summary>
-        /// Create an unauthenticated VersionsClient
+        /// Create a VersionsClient, consumer is responsible for authentication
         /// </summary>
         /// <param name="bugsplatApiClient">An authenticated instance of BugSplatApiClient that will be used for API requests</param>
         public static VersionsClient Create(IBugSplatApiClient bugsplatApiClient)

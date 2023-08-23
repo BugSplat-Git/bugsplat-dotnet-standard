@@ -13,11 +13,23 @@ namespace BugSplatDotNetStandard.Api
     {
         public bool Authenticated { get; private set; }
 
-        public Uri Host { get; set; } = new Uri("https://app.bugsplat.com");
+        public Uri Host
+        {
+            get
+            {
+                return host;
+            }
+            set
+            {
+                Authenticated = false;
+                host = value;
+            }
+        }
 
         private string clientId;
         private string clientSecret;
         private HttpClient httpClient;
+        private Uri host = new Uri("https://app.bugsplat.com");
 
         internal OAuth2ApiClient(
             string clientId,
@@ -67,8 +79,9 @@ namespace BugSplatDotNetStandard.Api
             var tokenType = jsonObj.GetValue("token_type");
             var accessToken = jsonObj.GetValue("access_token");
             var authorizeHeader = $"{tokenType} {accessToken}";
-            this.httpClient.DefaultRequestHeaders.Add("Authorization", authorizeHeader);
-            this.Authenticated = true;
+            httpClient.DefaultRequestHeaders.Remove("Authorization");
+            httpClient.DefaultRequestHeaders.Add("Authorization", authorizeHeader);
+            Authenticated = true;
 
             return this;
         }
