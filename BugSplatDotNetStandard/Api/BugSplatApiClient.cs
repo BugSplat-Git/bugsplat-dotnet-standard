@@ -45,11 +45,23 @@ namespace BugSplatDotNetStandard.Api
     {
         public bool Authenticated { get; private set; }
 
-        public Uri Host { get; set; } = new Uri("https://app.bugsplat.com");
+        public Uri Host
+        {
+            get
+            {
+                return host;
+            }
+            set
+            {
+                Authenticated = false;
+                host = value;
+            }
+        }
 
         private string email;
         private string password;
         private HttpClient httpClient;
+        private Uri host = new Uri("https://app.bugsplat.com");
 
         internal BugSplatApiClient(
             string email,
