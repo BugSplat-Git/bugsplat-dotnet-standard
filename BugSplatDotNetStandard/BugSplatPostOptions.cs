@@ -1,25 +1,79 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Net.Http;
 using static BugSplatDotNetStandard.BugSplat;
 
 namespace BugSplatDotNetStandard
 {
-    public class ExceptionPostOptions: BugSplatPostOptions, IExceptionPostOptions
+    public class ExceptionPostOptions : BugSplatPostOptions, IExceptionPostOptions
     {
         public ExceptionTypeId ExceptionType { get; set; } = ExceptionTypeId.Unknown;
+        public override int CrashTypeId { get => (int)ExceptionType; }
+        public static ExceptionPostOptions Create(IExceptionPostOptions options)
+        {
+            return new ExceptionPostOptions
+            {
+                Attachments = options.Attachments,
+                FormDataParams = options.FormDataParams,
+                Description = options.Description,
+                Email = options.Email,
+                Key = options.Key,
+                IpAddress = options.IpAddress,
+                Notes = options.Notes,
+                User = options.User,
+                ExceptionType = options.ExceptionType
+            };
+        }
     }
 
-    public class MinidumpPostOptions: BugSplatPostOptions, IMinidumpPostOptions
+    public class MinidumpPostOptions : BugSplatPostOptions, IMinidumpPostOptions
     {
         public MinidumpTypeId MinidumpType { get; set; } = MinidumpTypeId.Unknown;
+        public override int CrashTypeId { get => (int)MinidumpType; }
+        public static MinidumpPostOptions Create(IMinidumpPostOptions options)
+        {
+            return new MinidumpPostOptions
+            {
+                Attachments = options.Attachments,
+                FormDataParams = options.FormDataParams,
+                Description = options.Description,
+                Email = options.Email,
+                Key = options.Key,
+                IpAddress = options.IpAddress,
+                Notes = options.Notes,
+                User = options.User,
+                MinidumpType = options.MinidumpType
+            };
+        }
     }
 
-    public abstract class BugSplatPostOptions : IBugSplatPostOptions
+    public class XmlPostOptions : BugSplatPostOptions, IXmlPostOptions
     {
-        public List<FileInfo> Attachments { get; } = new List<FileInfo>();
+        public XmlTypeId XmlType { get; set; } = XmlTypeId.Xml;
+        public override int CrashTypeId { get => (int)XmlType; }
+        public static XmlPostOptions Create(IXmlPostOptions options)
+        {
+            return new XmlPostOptions
+            {
+                Attachments = options.Attachments,
+                FormDataParams = options.FormDataParams,
+                Description = options.Description,
+                Email = options.Email,
+                Key = options.Key,
+                IpAddress = options.IpAddress,
+                Notes = options.Notes,
+                User = options.User,
+                XmlType = options.XmlType
+            };
+        }
+    }
 
-        public List<IFormDataParam> FormDataParams { get; } = new List<IFormDataParam>();
+    public class BugSplatPostOptions : IBugSplatPostOptions, IHasCrashTypeId
+    {
+        public List<FileInfo> Attachments { get; set; } = new List<FileInfo>();
+
+        public List<IFormDataParam> FormDataParams { get; set; } = new List<IFormDataParam>();
 
         public string Description { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
@@ -27,9 +81,10 @@ namespace BugSplatDotNetStandard
         public string IpAddress { get; set; } = string.Empty;
         public string Notes { get; set; } = string.Empty;
         public string User { get; set; } = string.Empty;
+        public virtual int CrashTypeId { get; set; } = 0;
     }
 
-    public interface IExceptionPostOptions: IBugSplatPostOptions
+    public interface IExceptionPostOptions : IBugSplatPostOptions
     {
         /// <summary>
         /// An exception type to be added to the post that overrides the corresponding default values
@@ -37,12 +92,28 @@ namespace BugSplatDotNetStandard
         ExceptionTypeId ExceptionType { get; set; }
     }
 
-    public interface IMinidumpPostOptions: IBugSplatPostOptions
+    public interface IMinidumpPostOptions : IBugSplatPostOptions
     {
         /// <summary>
         /// A minidump type to be added to the post that overrides the corresponding default values
         /// </summary>
         MinidumpTypeId MinidumpType { get; set; }
+    }
+
+    public interface IXmlPostOptions : IBugSplatPostOptions
+    {
+        /// <summary>
+        /// An XML report type to be added to the post that overrides the corresponding default values
+        /// </summary>
+        XmlTypeId XmlType { get; set; }
+    }
+
+    public interface IHasCrashTypeId
+    {
+        /// <summary>
+        /// An identifier that tells the BugSplat backend how to process uploaded minidumps
+        /// </summary>
+        int CrashTypeId { get; }
     }
 
     public interface IBugSplatPostOptions

@@ -12,7 +12,7 @@ namespace BugSplatDotNetStandard
     /// <summary>
     /// A class for uploading Exceptions and minidump files to BugSplat
     /// </summary>
-    public class BugSplat: IExceptionPostOptions, IMinidumpPostOptions
+    public class BugSplat : IExceptionPostOptions, IMinidumpPostOptions, IXmlPostOptions
     {
         /// <summary>
         /// A list of files to be added to the upload at post time
@@ -64,6 +64,11 @@ namespace BugSplatDotNetStandard
         /// </summary>
         public string User { get; set; } = string.Empty;
 
+        /// <summary>
+        /// An identifier that tells the BugSplat backend how to process uploaded XML reports
+        /// </summary>
+        public XmlTypeId XmlType { get; set; } = XmlTypeId.Xml;
+
         public enum ExceptionTypeId
         {
             Unknown = 0,
@@ -78,6 +83,12 @@ namespace BugSplatDotNetStandard
             WindowsNative = 1,
             DotNet = 8,
             UnityNativeWindows = 15
+        }
+
+        public enum XmlTypeId
+        {
+            Xml = 21,
+            Asan = 25
         }
 
         public string Database { get; private set; }
@@ -117,7 +128,7 @@ namespace BugSplatDotNetStandard
                     Application,
                     Version,
                     stackTrace,
-                    this,
+                    ExceptionPostOptions.Create(this),
                     options
                 );
             }
@@ -144,14 +155,36 @@ namespace BugSplatDotNetStandard
         {
             ThrowIfArgumentIsNull(minidumpFileInfo, "minidumpFileInfo");
 
-            using(var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
                 return await crashPostClient.PostMinidump(
                     Database,
                     Application,
                     Version,
                     minidumpFileInfo,
-                    this,
+                    MinidumpPostOptions.Create(this),
+                    options
+                );
+            }
+        }
+
+        /// <summary>
+        /// Post an XML report to BugSplat
+        /// </summary>
+        /// <param name="ex">The XML file that will be posted to BugSplat</param>
+        /// <param name="options">Optional parameters that will override the defaults if provided</param>
+        public async Task<HttpResponseMessage> Post(FileInfo xmlFileInfo, XmlPostOptions options = null)
+        {
+            ThrowIfArgumentIsNull(xmlFileInfo, "xmlFileInfo");
+
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
+            {
+                return await crashPostClient.PostXmlReport(
+                    Database,
+                    Application,
+                    Version,
+                    xmlFileInfo,
+                    XmlPostOptions.Create(this),
                     options
                 );
             }

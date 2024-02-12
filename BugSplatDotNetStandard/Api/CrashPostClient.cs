@@ -37,8 +37,8 @@ namespace BugSplatDotNetStandard.Api
             string application,
             string version,
             string stackTrace,
-            IExceptionPostOptions defaultPostOptions,
-            IExceptionPostOptions overridePostOptions = null
+            ExceptionPostOptions defaultPostOptions,
+            ExceptionPostOptions overridePostOptions = null
         )
         {
             overridePostOptions = overridePostOptions ?? new ExceptionPostOptions();
@@ -69,7 +69,7 @@ namespace BugSplatDotNetStandard.Api
 
                     var s3Key = presignedUrl.ToString();
                     var md5 = GetETagFromResponseHeaders(uploadFileResponse.Headers);
-                    var crashTypeId = (int)(overridePostOptions?.ExceptionType != ExceptionTypeId.Unknown ? overridePostOptions.ExceptionType : defaultPostOptions.ExceptionType);
+                    var crashTypeId = overridePostOptions?.CrashTypeId != (int)ExceptionTypeId.Unknown ? overridePostOptions.CrashTypeId : defaultPostOptions.CrashTypeId;
                     var commitS3CrashResponse = await CommitS3CrashUpload(
                         database,
                         application,
@@ -93,8 +93,46 @@ namespace BugSplatDotNetStandard.Api
             string application,
             string version,
             FileInfo minidumpFileInfo,
-            IMinidumpPostOptions defaultPostOptions,
-            IMinidumpPostOptions overridePostOptions = null
+            MinidumpPostOptions defaultPostOptions,
+            MinidumpPostOptions overridePostOptions = null
+        )
+        {
+            return await PostCrashFile(
+                database,
+                application,
+                version,
+                minidumpFileInfo,
+                defaultPostOptions,
+                overridePostOptions
+            );
+        }
+
+        public async Task<HttpResponseMessage> PostXmlReport(
+            string database,
+            string application,
+            string version,
+            FileInfo xmlFileInfo,
+            XmlPostOptions defaultPostOptions,
+            XmlPostOptions overridePostOptions = null
+        )
+        {
+            return await PostCrashFile(
+                database,
+                application,
+                version,
+                xmlFileInfo,
+                defaultPostOptions,
+                overridePostOptions
+            );
+        }
+
+        private async Task<HttpResponseMessage> PostCrashFile(
+            string database,
+            string application,
+            string version,
+            FileInfo crashFileInfo,
+            BugSplatPostOptions defaultPostOptions,
+            BugSplatPostOptions overridePostOptions = null
         )
         {
             overridePostOptions = overridePostOptions ?? new MinidumpPostOptions();
@@ -103,7 +141,7 @@ namespace BugSplatDotNetStandard.Api
                 .Select(attachment => InMemoryFile.FromFileInfo(attachment))
                 .ToList();
 
-            files.Add(new InMemoryFile() { FileName = minidumpFileInfo.Name, Content = File.ReadAllBytes(minidumpFileInfo.FullName) });
+            files.Add(new InMemoryFile() { FileName = crashFileInfo.Name, Content = File.ReadAllBytes(crashFileInfo.FullName) });
 
             var zipBytes = ZipUtils.CreateInMemoryZipFile(files);
             using (
@@ -125,7 +163,7 @@ namespace BugSplatDotNetStandard.Api
 
                     var s3Key = presignedUrl.ToString();
                     var md5 = GetETagFromResponseHeaders(uploadFileResponse.Headers);
-                    var crashTypeId = (int)(overridePostOptions?.MinidumpType != MinidumpTypeId.Unknown ? overridePostOptions.MinidumpType : defaultPostOptions.MinidumpType);
+                    var crashTypeId = overridePostOptions?.CrashTypeId != (int)MinidumpTypeId.Unknown ? overridePostOptions.CrashTypeId : defaultPostOptions.CrashTypeId;
                     var commitS3CrashResponse = await CommitS3CrashUpload(
                         database,
                         application,
