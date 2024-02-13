@@ -54,7 +54,7 @@ namespace Tests
                 application,
                 version,
                 stackTrace,
-                bugsplat
+                ExceptionPostOptions.Create(bugsplat)
             );
 
             Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);
@@ -78,7 +78,7 @@ namespace Tests
                 application,
                 version,
                 new FileInfo("Files/minidump.dmp"),
-                bugsplat
+                MinidumpPostOptions.Create(bugsplat)
             );
 
             Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);

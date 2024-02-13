@@ -8,10 +8,10 @@
 
 ## 👋 Introduction
 
-BugSplatDotNetStandard allows you to capture and track exceptions on all platforms that support .NET Standard 2.0. This includes, .NET Core, Univeral Windows Platform, Mono and more! Before continuing with the tutorial please make sure you have completed the following checklist:
+BugSplatDotNetStandard allows you to capture and track exceptions on all platforms that support .NET Standard 2.0. This includes, .NET Core, Universal Windows Platform, Mono and more! Before continuing with the tutorial please make sure you have completed the following checklist:
 
 - [Register](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user.
-- [Log in](https://app.bugsplat.com/auth0/login) using your email address.
+- [Log in](https://app.bugsplat.com/cognito/login) using your email address.
 
 You can also view the [MyUwpCrasher](https://github.com/BugSplat-Git/MyUwpCrasher) repo which contains a sample application with BugSplatDotNetStandard installed and configured to post exceptions to BugSplat.
 
