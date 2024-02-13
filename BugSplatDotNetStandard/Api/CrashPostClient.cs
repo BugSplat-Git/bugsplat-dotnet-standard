@@ -126,7 +126,7 @@ namespace BugSplatDotNetStandard.Api
             );
         }
 
-        private async Task<HttpResponseMessage> PostCrashFile(
+        public async Task<HttpResponseMessage> PostCrashFile(
             string database,
             string application,
             string version,

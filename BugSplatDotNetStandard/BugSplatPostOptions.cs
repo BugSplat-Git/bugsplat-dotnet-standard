@@ -82,6 +82,21 @@ namespace BugSplatDotNetStandard
         public string Notes { get; set; } = string.Empty;
         public string User { get; set; } = string.Empty;
         public virtual int CrashTypeId { get; set; } = 0;
+        public static BugSplatPostOptions Create(IBugSplatPostOptions options, int crashTypeId)
+        {
+            return new BugSplatPostOptions
+            {
+                Attachments = options.Attachments,
+                FormDataParams = options.FormDataParams,
+                Description = options.Description,
+                Email = options.Email,
+                Key = options.Key,
+                IpAddress = options.IpAddress,
+                Notes = options.Notes,
+                User = options.User,
+                CrashTypeId = crashTypeId
+            };
+        }
     }
 
     public interface IExceptionPostOptions : IBugSplatPostOptions

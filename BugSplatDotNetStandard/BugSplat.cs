@@ -69,6 +69,11 @@ namespace BugSplatDotNetStandard
         /// </summary>
         public XmlTypeId XmlType { get; set; } = XmlTypeId.Xml;
 
+        /// <summary>
+        /// An identifier that tells the BugSplat backend how to process uploaded reports
+        /// </summary>
+        public int CrashTypeId { get; set; } = 0;
+
         public enum ExceptionTypeId
         {
             Unknown = 0,
@@ -185,6 +190,28 @@ namespace BugSplatDotNetStandard
                     Version,
                     xmlFileInfo,
                     XmlPostOptions.Create(this),
+                    options
+                );
+            }
+        }
+
+        /// <summary>
+        /// Post a report to BugSplat, caller is responsible for setting the correct CrashTypeId
+        /// </summary>
+        /// <param name="ex">The report file that will be posted to BugSplat, can be a minidump or XML report</param>
+        /// <param name="options">Optional parameters that will override the defaults if provided</param>
+        public async Task<HttpResponseMessage> Post(FileInfo crashFileInfo, BugSplatPostOptions options = null)
+        {
+            ThrowIfArgumentIsNull(crashFileInfo, "crashFileInfo");
+
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
+            {
+                return await crashPostClient.PostCrashFile(
+                    Database,
+                    Application,
+                    Version,
+                    crashFileInfo,
+                    BugSplatPostOptions.Create(this, CrashTypeId),
                     options
                 );
             }
