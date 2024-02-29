@@ -11,16 +11,16 @@ namespace BugSplatDotNetStandard.Http
     // More information about Unity's plans to update to .NET 6 can be found here:
     // https://forum.unity.com/threads/unity-future-net-development-status.1092205/
 
-    internal class JsonObject
+    public class JsonObject
     {
         private string json;
 
-        internal JsonObject(string json)
+        public JsonObject(string json)
         {
             this.json = json;
         }
                 
-        internal string GetValue(params string[] path)
+        public string GetValue(params string[] path)
         {
             var jsonBytes = Encoding.UTF8.GetBytes(json);
             var quotas = new XmlDictionaryReaderQuotas();
