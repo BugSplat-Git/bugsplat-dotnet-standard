@@ -46,8 +46,14 @@ namespace BugSplatDotNetStandard.Api
             var files = overridePostOptions.Attachments
                 .Select(attachment => InMemoryFile.FromFileInfo(attachment))
                 .ToList();
+            
+            var additionalFormDataFiles = overridePostOptions.FormDataParams
+                .Where(file => !string.IsNullOrEmpty(file.FileName) && file.Content != null)
+                .Select(file => new InMemoryFile() { FileName = file.FileName, Content = file.Content.ReadAsByteArrayAsync().Result })
+                .ToList();
 
             files.Add(new InMemoryFile() { FileName = "Callstack.txt", Content = Encoding.UTF8.GetBytes(stackTrace) });
+            files.AddRange(additionalFormDataFiles);
 
             var zipBytes = ZipUtils.CreateInMemoryZipFile(files);
             using (
