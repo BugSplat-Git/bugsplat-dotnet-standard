@@ -72,7 +72,7 @@ var options = new ExceptionPostOptions()
     User = "Fred",
     Key = "the key!"
 };
-options.AdditionalAttachments.Add(new FileInfo("/path/to/attachment2.txt"));
+options.Attachments.Add(new FileInfo("/path/to/attachment2.txt"));
 
 await bugsplat.Post(ex, options);
 ```
