@@ -34,7 +34,7 @@ namespace Tests
             lockedFileWriter = File.Open(lockedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.None);
             lockedFileWriter.Write(bytesToWrite, 0, bytesToWrite.Length);
             lockedFileWriter.Flush();
-            var minidumpFile = new FileInfo("minidump.dmp");
+            minidumpFile = new FileInfo("minidump.dmp");
             File.Create(minidumpFile.FullName).Close();
         }
 
