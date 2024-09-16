@@ -43,10 +43,11 @@ namespace BugSplatDotNetStandard.Api
         {
             overridePostOptions = overridePostOptions ?? new ExceptionPostOptions();
 
-            var files = overridePostOptions.Attachments
-                .Select(attachment => InMemoryFile.FromFileInfo(attachment))
+            var files = CombineListsWithDuplicatesRemoved(defaultPostOptions.Attachments, overridePostOptions.Attachments)
+                .Select(attachment => TryCreateInMemoryFileFromFileInfo(attachment))
+                .Where(file => file != null)
                 .ToList();
-            
+
             var additionalFormDataFiles = overridePostOptions.FormDataParams
                 .Where(file => !string.IsNullOrEmpty(file.FileName) && file.Content != null)
                 .Select(file => new InMemoryFile() { FileName = file.FileName, Content = file.Content.ReadAsByteArrayAsync().Result })
@@ -82,9 +83,7 @@ namespace BugSplatDotNetStandard.Api
                         version,
                         md5,
                         s3Key,
-                        crashTypeId,
-                        defaultPostOptions,
-                        overridePostOptions
+                        crashTypeId
                     );
 
                     ThrowIfHttpRequestFailed(commitS3CrashResponse);
@@ -143,8 +142,9 @@ namespace BugSplatDotNetStandard.Api
         {
             overridePostOptions = overridePostOptions ?? new MinidumpPostOptions();
 
-            var files = overridePostOptions.Attachments
-                .Select(attachment => InMemoryFile.FromFileInfo(attachment))
+            var files = CombineListsWithDuplicatesRemoved(defaultPostOptions.Attachments, overridePostOptions.Attachments)
+                .Select(attachment => TryCreateInMemoryFileFromFileInfo(attachment))
+                .Where(file => file != null)
                 .ToList();
 
             files.Add(new InMemoryFile() { FileName = crashFileInfo.Name, Content = File.ReadAllBytes(crashFileInfo.FullName) });
@@ -176,9 +176,7 @@ namespace BugSplatDotNetStandard.Api
                         version,
                         md5,
                         s3Key,
-                        crashTypeId,
-                        defaultPostOptions,
-                        overridePostOptions
+                        crashTypeId
                     );
 
                     ThrowIfHttpRequestFailed(commitS3CrashResponse);
@@ -194,29 +192,38 @@ namespace BugSplatDotNetStandard.Api
             this.s3Client.Dispose();
         }
 
+        private List<FileInfo> CombineListsWithDuplicatesRemoved(
+            List<FileInfo> defaultList,
+            List<FileInfo> overrideList
+        )
+        {
+            return defaultList
+                .Concat(overrideList)
+                .GroupBy(file => file.FullName)
+                .Select(group => group.First())
+                .ToList();
+        }
+
         private async Task<HttpResponseMessage> CommitS3CrashUpload(
             string database,
             string application,
             string version,
             string md5,
             string s3Key,
-            int crashTypeId,
-            IBugSplatPostOptions defaultPostOptions,
-            IBugSplatPostOptions overridePostOptions
+            int crashTypeId
         )
         {
             var baseUrl = this.CreateBaseUrlFromDatabase(database);
             var route = $"{baseUrl}/api/commitS3CrashUpload";
-            var body = CreateMultiPartFormDataContent(
-                database,
-                application,
-                version,
-                defaultPostOptions,
-                overridePostOptions
-            );
-            body.Add(new StringContent($"{crashTypeId}"), "crashTypeId");
-            body.Add(new StringContent(s3Key), "s3Key");
-            body.Add(new StringContent(md5), "md5");
+            var body = new MultipartFormDataContent()
+            {
+                { new StringContent(database), "database" },
+                { new StringContent(application), "appName" },
+                { new StringContent(version), "appVersion" },
+                { new StringContent(crashTypeId.ToString()), "crashTypeId" },
+                { new StringContent(s3Key), "s3Key" },
+                { new StringContent(md5), "md5" }
+            };
 
             return await httpClient.PostAsync(route, body);
         }
@@ -224,74 +231,6 @@ namespace BugSplatDotNetStandard.Api
         private string CreateBaseUrlFromDatabase(string database)
         {
             return $"https://{database}.bugsplat.com";
-        }
-
-        private MultipartFormDataContent CreateMultiPartFormDataContent(
-            string database,
-            string application,
-            string version,
-            IBugSplatPostOptions defaultOptions,
-            IBugSplatPostOptions overrideOptions = null
-        )
-        {
-            var description = GetStringValueOrDefault(overrideOptions?.Description, defaultOptions.Description);
-            var email = GetStringValueOrDefault(overrideOptions?.Email, defaultOptions.Email);
-            var key = GetStringValueOrDefault(overrideOptions?.Key, defaultOptions.Key);
-            var notes = GetStringValueOrDefault(overrideOptions?.Notes, defaultOptions.Notes);
-            var user = GetStringValueOrDefault(overrideOptions?.User, defaultOptions.User);
-
-            var body = new MultipartFormDataContent
-            {
-                { new StringContent(database), "database" },
-                { new StringContent(application), "appName" },
-                { new StringContent(version), "appVersion" },
-                { new StringContent(description), "description" },
-                { new StringContent(email), "email" },
-                { new StringContent(key), "appKey" },
-                { new StringContent(notes), "notes" },
-                { new StringContent(user), "user" },
-            };
-
-            var formDataParams = overrideOptions?.FormDataParams ?? new List<IFormDataParam>();
-            formDataParams.AddRange(defaultOptions.FormDataParams);
-            foreach (var param in formDataParams)
-            {
-                if (!string.IsNullOrEmpty(param.FileName))
-                {
-                    body.Add(param.Content, param.Name, param.FileName);
-                    continue;
-                }
-
-                body.Add(param.Content, param.Name);
-            }
-
-            var attachments = new List<FileInfo>();
-            attachments.AddRange(defaultOptions.Attachments);
-            if (overrideOptions != null)
-            {
-                attachments.AddRange(overrideOptions.Attachments);
-            }
-
-            for (var i = 0; i < attachments.Count; i++)
-            {
-                byte[] bytes = null;
-                using (var fileStream = File.Open(attachments[i].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        fileStream.CopyTo(memoryStream);
-                        bytes = memoryStream.ToArray();
-                    }
-                }
-
-                if (bytes != null)
-                {
-                    var name = attachments[i].Name;
-                    body.Add(new ByteArrayContent(bytes), name, name);
-                }
-            }
-
-            return body;
         }
 
         private async Task<HttpResponseMessage> GetCrashUploadUrl(
@@ -305,7 +244,7 @@ namespace BugSplatDotNetStandard.Api
             var path = $"{baseUrl}/api/getCrashUploadUrl";
             var route = $"{path}?database={database}&appName={application}&appVersion={version}&crashPostSize={crashPostSize}";
 
-            
+
             return await httpClient.GetAsync(route);
         }
 
@@ -330,6 +269,18 @@ namespace BugSplatDotNetStandard.Api
             catch (Exception ex)
             {
                 throw new Exception("Failed to parse crash upload url", ex);
+            }
+        }
+
+        private InMemoryFile TryCreateInMemoryFileFromFileInfo(FileInfo fileInfo)
+        {
+            try
+            {
+                return InMemoryFile.FromFileInfo(fileInfo);
+            }
+            catch
+            {
+                return null;
             }
         }
     }
