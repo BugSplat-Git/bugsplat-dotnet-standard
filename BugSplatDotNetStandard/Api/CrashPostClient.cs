@@ -43,8 +43,8 @@ namespace BugSplatDotNetStandard.Api
         {
             overridePostOptions = overridePostOptions ?? new ExceptionPostOptions();
 
-            var files = overridePostOptions.Attachments
-                .Select(attachment => InMemoryFile.FromFileInfo(attachment))
+                .Select(attachment => TryCreateInMemoryFileFromFileInfo(attachment))
+                .Where(file => file != null)
                 .ToList();
             
             var additionalFormDataFiles = overridePostOptions.FormDataParams
@@ -143,8 +143,8 @@ namespace BugSplatDotNetStandard.Api
         {
             overridePostOptions = overridePostOptions ?? new MinidumpPostOptions();
 
-            var files = overridePostOptions.Attachments
-                .Select(attachment => InMemoryFile.FromFileInfo(attachment))
+                .Select(attachment => TryCreateInMemoryFileFromFileInfo(attachment))
+                .Where(file => file != null)
                 .ToList();
 
             files.Add(new InMemoryFile() { FileName = crashFileInfo.Name, Content = File.ReadAllBytes(crashFileInfo.FullName) });
@@ -330,6 +330,18 @@ namespace BugSplatDotNetStandard.Api
             catch (Exception ex)
             {
                 throw new Exception("Failed to parse crash upload url", ex);
+            }
+        }
+
+        private InMemoryFile TryCreateInMemoryFileFromFileInfo(FileInfo fileInfo)
+        {
+            try
+            {
+                return InMemoryFile.FromFileInfo(fileInfo);
+            }
+            catch
+            {
+                return null;
             }
         }
     }

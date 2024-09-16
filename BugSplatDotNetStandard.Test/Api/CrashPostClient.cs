@@ -1,8 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BugSplatDotNetStandard;
@@ -11,7 +11,6 @@ using BugSplatDotNetStandard.Http;
 using Moq;
 using Moq.Protected;
 using NUnit.Framework;
-using static Tests.HttpContentVerifiers;
 using static Tests.StackTraceFactory;
 
 namespace Tests
@@ -22,6 +21,30 @@ namespace Tests
         const string database = "fred";
         const string application = "my-net-crasher";
         const string version = "1.0";
+
+        FileInfo lockedFile;
+        FileInfo minidumpFile;
+        FileStream lockedFileWriter;
+
+        [OneTimeSetUp]
+        public void SetUp()
+        {
+            var bytesToWrite = Encoding.UTF8.GetBytes("This file is locked");
+            lockedFile = new FileInfo("lockedFile.txt");
+            lockedFileWriter = File.Open(lockedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.None);
+            lockedFileWriter.Write(bytesToWrite, 0, bytesToWrite.Length);
+            lockedFileWriter.Flush();
+            var minidumpFile = new FileInfo("minidump.dmp");
+            File.Create(minidumpFile.FullName).Close();
+        }
+
+        [OneTimeTearDown]
+        public void TearDown()
+        {
+            lockedFileWriter.Close();
+            lockedFile.Delete();
+            minidumpFile.Delete();
+        }
 
         [Test]
         public void CrashPostClient_Constructor_ShouldThrowIfHttpClientFactoryIsNull()
@@ -46,7 +69,7 @@ namespace Tests
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
             var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
-            
+
             var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
 
             var postResult = await sut.PostException(
@@ -70,7 +93,7 @@ namespace Tests
             var httpClient = new HttpClient(mockHttp.Object);
             var httpClientFactory = new FakeHttpClientFactory(httpClient);
             var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
-            
+
             var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
 
             var postResult = await sut.PostMinidump(
@@ -84,7 +107,59 @@ namespace Tests
             Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);
         }
 
-       private Mock<HttpMessageHandler> CreateMockHttpClientForExceptionPost(string crashUploadUrl)
+        [Test]
+        public void CrashPostClient_PostException_ShouldNotThrowIfAttachmentLocked()
+        {
+            var stackTrace = CreateStackTrace();
+            var bugsplat = new BugSplat(database, application, version);
+            bugsplat.Attachments.Add(lockedFile);
+            var getCrashUrl = "https://fake.url.com";
+            var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
+
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
+
+            Assert.DoesNotThrowAsync(async () =>
+            {
+                await sut.PostException(
+                    database,
+                    application,
+                    version,
+                    stackTrace,
+                    ExceptionPostOptions.Create(bugsplat)
+                );
+            });
+        }
+
+        [Test]
+        public void CrashPostClient_PostCrashFile_ShouldNotThrowIfAttachmentLocked()
+        {
+            var stackTrace = CreateStackTrace();
+            var bugsplat = new BugSplat(database, application, version);
+            bugsplat.Attachments.Add(lockedFile);
+            var getCrashUrl = "https://fake.url.com";
+            var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
+
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
+
+            Assert.DoesNotThrowAsync(async () =>
+            {
+                await sut.PostCrashFile(
+                    database,
+                    application,
+                    version,
+                    new FileInfo("minidump.dmp"),
+                    MinidumpPostOptions.Create(bugsplat)
+                );
+            });
+        }
+
+        private Mock<HttpMessageHandler> CreateMockHttpClientForExceptionPost(string crashUploadUrl)
         {
             var getCrashUploadUrlResponse = new HttpResponseMessage();
             getCrashUploadUrlResponse.StatusCode = HttpStatusCode.OK;
@@ -103,7 +178,7 @@ namespace Tests
                )
                .ReturnsAsync(getCrashUploadUrlResponse)
                .ReturnsAsync(commitCrashUploadUrlReponse);
- 
+
             return handlerMock;
         }
     }
