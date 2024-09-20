@@ -10,6 +10,7 @@ using BugSplatDotNetStandard.Api;
 using BugSplatDotNetStandard.Http;
 using Moq;
 using Moq.Protected;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using static Tests.StackTraceFactory;
 
@@ -18,22 +19,30 @@ namespace Tests
     [TestFixture]
     public class CrashPostClientTest
     {
-        const string database = "fred";
-        const string application = "my-net-crasher";
-        const string version = "1.0";
-
         FileInfo lockedFile;
         FileInfo minidumpFile;
         FileStream lockedFileWriter;
 
+        string database;
+        string application = "TestApp";
+        string version = "1.0.0";
+        string clientId;
+        string clientSecret;
+
         [OneTimeSetUp]
         public void SetUp()
         {
+            DotNetEnv.Env.Load();
+            database = Environment.GetEnvironmentVariable("BUGSPLAT_DATABASE");
+            clientId = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_ID");
+            clientSecret = Environment.GetEnvironmentVariable("BUGSPLAT_CLIENT_SECRET");
+
             var bytesToWrite = Encoding.UTF8.GetBytes("This file is locked");
             lockedFile = new FileInfo("lockedFile.txt");
             lockedFileWriter = File.Open(lockedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.None);
             lockedFileWriter.Write(bytesToWrite, 0, bytesToWrite.Length);
             lockedFileWriter.Flush();
+
             minidumpFile = new FileInfo("minidump.dmp");
             File.Create(minidumpFile.FullName).Close();
         }
@@ -61,7 +70,6 @@ namespace Tests
         [Test]
         public async Task CrashPostClient_PostException_ShouldReturn200()
         {
-            var expectedUri = $"https://{database}.bugsplat.com/api/getCrashUploadUrl?database={database}&appName={application}&appVersion={version}";
             var stackTrace = CreateStackTrace();
             var bugsplat = new BugSplat(database, application, version);
             var getCrashUrl = "https://fake.url.com";
@@ -86,7 +94,6 @@ namespace Tests
         [Test]
         public async Task CrashPostClient_PostMinidump_ShouldReturn200()
         {
-            var expectedUri = $"https://{database}.bugsplat.com/api/getCrashUploadUrl?database={database}&appName={application}&appVersion={version}";
             var bugsplat = new BugSplat(database, application, version);
             var getCrashUrl = "https://fake.url.com";
             var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
@@ -136,7 +143,6 @@ namespace Tests
         [Test]
         public void CrashPostClient_PostCrashFile_ShouldNotThrowIfAttachmentLocked()
         {
-            var stackTrace = CreateStackTrace();
             var bugsplat = new BugSplat(database, application, version);
             bugsplat.Attachments.Add(lockedFile);
             var getCrashUrl = "https://fake.url.com";
@@ -157,6 +163,43 @@ namespace Tests
                     MinidumpPostOptions.Create(bugsplat)
                 );
             });
+        }
+
+        [Test]
+        [Explicit]
+        public async Task CrashPostClient_PostCrashFile_PostCrashAndMetadata()
+        {
+            var stackTrace = CreateStackTrace();
+            var bugsplat = new BugSplat(database, application, version);
+            bugsplat.Description = "Test description";
+            bugsplat.Email = "test@test.com";
+            bugsplat.Key = "Test key";
+            bugsplat.Notes = "Test notes";
+            bugsplat.User = "Test user";
+            var oauth2ApiClient = OAuth2ApiClient.Create(clientId, clientSecret)
+                .Authenticate()
+                .Result;
+            var crashDetailsClient = CrashDetailsClient.Create(oauth2ApiClient);
+            var sut = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default);
+            
+            var postResult = await sut.PostException(
+                database,
+                application,
+                version,
+                stackTrace,
+                ExceptionPostOptions.Create(bugsplat)
+            );
+            var postResponseContent = JObject.Parse(postResult.Content.ReadAsStringAsync().Result);
+            var id = postResponseContent["crashId"].Value<int>();
+            
+            var crashDetails = await crashDetailsClient.GetCrashDetails(database, id);
+            var crashDetailsContent = JObject.Parse(crashDetails.Content.ReadAsStringAsync().Result);
+            Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);
+            Assert.AreEqual(bugsplat.Description, crashDetailsContent["description"].Value<string>());
+            Assert.AreEqual(bugsplat.Email, crashDetailsContent["email"].Value<string>());
+            Assert.AreEqual(bugsplat.Key, crashDetailsContent["appKey"].Value<string>());
+            Assert.AreEqual(bugsplat.Notes, crashDetailsContent["comments"].Value<string>());
+            Assert.AreEqual(bugsplat.User, crashDetailsContent["user"].Value<string>());
         }
 
         private Mock<HttpMessageHandler> CreateMockHttpClientForExceptionPost(string crashUploadUrl)

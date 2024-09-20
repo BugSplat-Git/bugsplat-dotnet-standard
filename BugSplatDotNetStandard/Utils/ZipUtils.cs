@@ -11,11 +11,16 @@ namespace BugSplatDotNetStandard.Utils
 
         public static InMemoryFile FromFileInfo(FileInfo fileInfo)
         {
-            return new InMemoryFile()
+            using (FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (MemoryStream memoryStream = new MemoryStream())
             {
-                FileName = fileInfo.Name,
-                Content = File.ReadAllBytes(fileInfo.FullName)
-            };
+                fileStream.CopyTo(memoryStream);
+                return new InMemoryFile()
+                {
+                    FileName = fileInfo.Name,
+                    Content = memoryStream.ToArray()
+                };
+            }
         }
     }
 
@@ -28,7 +33,7 @@ namespace BugSplatDotNetStandard.Utils
         
     }
 
-    internal class ZipUtils: IZipUtils
+    internal class ZipUtils : IZipUtils
     {
         public byte[] CreateInMemoryZipFile(IEnumerable<InMemoryFile> files)
         {
@@ -52,12 +57,12 @@ namespace BugSplatDotNetStandard.Utils
 
             return zipBytes;
         }
-        
+
         public FileInfo CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files)
         {
             using (var zipFile = ZipFile.Open(zipFileFullName, ZipArchiveMode.Create))
             {
-                foreach(var file in files)
+                foreach (var file in files)
                 {
                     zipFile.CreateEntryFromFile(file.FullName, file.Name);
                 }

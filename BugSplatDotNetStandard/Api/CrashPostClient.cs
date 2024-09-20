@@ -27,7 +27,7 @@ namespace BugSplatDotNetStandard.Api
         {
             ThrowIfArgumentIsNull(httpClientFactory, "httpClientFactory");
             ThrowIfArgumentIsNull(s3ClientFactory, "s3ClientFactory");
-            
+
             this.httpClient = httpClientFactory.CreateClient();
             this.s3Client = s3ClientFactory.CreateClient();
         }
@@ -83,7 +83,9 @@ namespace BugSplatDotNetStandard.Api
                         version,
                         md5,
                         s3Key,
-                        crashTypeId
+                        crashTypeId,
+                        defaultPostOptions,
+                        overridePostOptions
                     );
 
                     ThrowIfHttpRequestFailed(commitS3CrashResponse);
@@ -176,7 +178,9 @@ namespace BugSplatDotNetStandard.Api
                         version,
                         md5,
                         s3Key,
-                        crashTypeId
+                        crashTypeId,
+                        defaultPostOptions,
+                        overridePostOptions
                     );
 
                     ThrowIfHttpRequestFailed(commitS3CrashResponse);
@@ -210,20 +214,44 @@ namespace BugSplatDotNetStandard.Api
             string version,
             string md5,
             string s3Key,
-            int crashTypeId
+            int crashTypeId,
+            IBugSplatPostOptions defaultOptions,
+            IBugSplatPostOptions overrideOptions = null
         )
         {
-            var baseUrl = this.CreateBaseUrlFromDatabase(database);
-            var route = $"{baseUrl}/api/commitS3CrashUpload";
+            var description = GetStringValueOrDefault(overrideOptions?.Description, defaultOptions.Description);
+            var email = GetStringValueOrDefault(overrideOptions?.Email, defaultOptions.Email);
+            var key = GetStringValueOrDefault(overrideOptions?.Key, defaultOptions.Key);
+            var notes = GetStringValueOrDefault(overrideOptions?.Notes, defaultOptions.Notes);
+            var user = GetStringValueOrDefault(overrideOptions?.User, defaultOptions.User);
             var body = new MultipartFormDataContent()
             {
                 { new StringContent(database), "database" },
                 { new StringContent(application), "appName" },
                 { new StringContent(version), "appVersion" },
+                { new StringContent(description), "description" },
+                { new StringContent(email), "email" },
+                { new StringContent(key), "appKey" },
+                { new StringContent(notes), "notes" },
+                { new StringContent(user), "user" },
                 { new StringContent(crashTypeId.ToString()), "crashTypeId" },
                 { new StringContent(s3Key), "s3Key" },
                 { new StringContent(md5), "md5" }
             };
+
+            var formDataParams = overrideOptions?.FormDataParams ?? new List<IFormDataParam>();
+            formDataParams.AddRange(defaultOptions.FormDataParams);
+            foreach (var param in formDataParams)
+            {
+                if (!string.IsNullOrEmpty(param.FileName))
+                {
+                    body.Add(param.Content, param.Name, param.FileName);
+                    continue;
+                }
+                body.Add(param.Content, param.Name);
+            }
+            var baseUrl = this.CreateBaseUrlFromDatabase(database);
+            var route = $"{baseUrl}/api/commitS3CrashUpload";
 
             return await httpClient.PostAsync(route, body);
         }
@@ -243,8 +271,7 @@ namespace BugSplatDotNetStandard.Api
             var baseUrl = this.CreateBaseUrlFromDatabase(database);
             var path = $"{baseUrl}/api/getCrashUploadUrl";
             var route = $"{path}?database={database}&appName={application}&appVersion={version}&crashPostSize={crashPostSize}";
-
-
+            
             return await httpClient.GetAsync(route);
         }
 
