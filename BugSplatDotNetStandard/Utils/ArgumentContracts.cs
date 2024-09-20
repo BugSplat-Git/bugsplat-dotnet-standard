@@ -13,6 +13,14 @@ namespace BugSplatDotNetStandard.Utils
             }
         }
 
+        internal static void ThrowIfArgumentIsNullOrNegative(int argument, string name)
+        {
+            if (argument <= 0)
+            {
+                throw new ArgumentException($"{name} cannot be null or less than zero!");
+            }
+        }
+
         internal static void ThrowIfArgumentIsNullOrEmpty(string argument, string name)
         {
             if (string.IsNullOrEmpty(argument))
