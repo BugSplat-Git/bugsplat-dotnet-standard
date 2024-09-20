@@ -9,16 +9,16 @@
     <Copyright>Copyright BugSplat, All Rights Reserved</Copyright>
     <PackageProjectUrl>https://www.bugsplat.com</PackageProjectUrl>
     <PackageTags>bugsplat crash reporting reporter unhandled exception error catch analytics debug debugging debugger stack trace line numbers net uwp core mono unity xamarin maui</PackageTags>
-    <AssemblyVersion>4.0.3.0</AssemblyVersion>
-    <FileVersion>4.0.3.0</FileVersion>
+    <AssemblyVersion>4.1.0.0</AssemblyVersion>
+    <FileVersion>4.1.0.0</FileVersion>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/BugSplat-Git/bugsplat-dotnet-standard</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>4.0.3</Version>
+    <Version>4.1.0.0</Version>
     <PackageReleaseNotes>
-      * Gracefully ignore adding attachments that can't be read.
-      * Fixed bug where original attachments were just forgotten about.
-      * Cleans up some bogus code that was unnecessarily reading files.
+      * Fix for issue locking attachments for read at upload time
+      * Fix for missing crash metadata
+      * Adds CrashDetailsApiClient
     </PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
