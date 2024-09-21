@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.421
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BugSplatDotNetStandard", "BugSplatDotNetStandard\BugSplatDotNetStandard.csproj", "{045F36D8-9EC4-47CE-9BBD-FB6FC188CB25}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BugSplatDotNetStandard.Test", "BugSplatDotNetStandard.Test\BugSplatDotNetStandard.Test.csproj", "{31713548-DBAF-4058-B836-A658A3219DFC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "my-maui-crasher", "my-maui-crasher\my-maui-crasher.csproj", "{0C513AB1-0BB8-4A24-A2A3-908649E576D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "my-maui-crasher", "my-maui-crasher\my-maui-crasher.csproj", "{0C513AB1-0BB8-4A24-A2A3-908649E576D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +25,7 @@ Global
 		{31713548-DBAF-4058-B836-A658A3219DFC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0C513AB1-0BB8-4A24-A2A3-908649E576D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0C513AB1-0BB8-4A24-A2A3-908649E576D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C513AB1-0BB8-4A24-A2A3-908649E576D5}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{0C513AB1-0BB8-4A24-A2A3-908649E576D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C513AB1-0BB8-4A24-A2A3-908649E576D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
