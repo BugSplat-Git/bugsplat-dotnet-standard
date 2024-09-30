@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using BugSplatDotNetStandard;
 using BugSplatDotNetStandard.Api;
 using BugSplatDotNetStandard.Http;
@@ -13,6 +14,7 @@ using Moq.Protected;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using static Tests.StackTraceFactory;
+using System.IO.Compression;
 
 namespace Tests
 {
@@ -200,6 +202,55 @@ namespace Tests
             Assert.AreEqual(bugsplat.Key, crashDetailsContent["appKey"].Value<string>());
             Assert.AreEqual(bugsplat.Notes, crashDetailsContent["comments"].Value<string>());
             Assert.AreEqual(bugsplat.User, crashDetailsContent["user"].Value<string>());
+        }
+
+        [Test]
+        [Explicit]
+        public async Task CrashPostClient_PostCrashFile_AllowAdditionalFormDataAttachments()
+        {
+            var bugsplat = new BugSplat(database, application, version);
+            var minidump = new FileInfo("Files/minidump.dmp");
+            var oauth2ApiClient = OAuth2ApiClient.Create(clientId, clientSecret)
+                .Authenticate()
+                .Result;
+            var crashDetailsClient = CrashDetailsClient.Create(oauth2ApiClient);
+            var sut = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default);
+            var fileName = "hello.txt";
+            var expectedContent = "hello world!";
+            var overrideOptions = new MinidumpPostOptions()
+            {
+                FormDataParams = new List<IFormDataParam>()
+                {
+                    new FormDataParam()
+                    {
+                        Content = new StringContent(expectedContent),
+                        FileName = fileName,
+                        Name = "file0"
+                    }
+                }
+            };
+            
+            var postResult = await sut.PostMinidump(
+                database,
+                application,
+                version,
+                minidump,
+                MinidumpPostOptions.Create(bugsplat),
+                overrideOptions
+            );
+
+            var postResponseContent = JObject.Parse(postResult.Content.ReadAsStringAsync().Result);
+            var id = postResponseContent["crashId"].Value<int>();
+            var crashDetails = await crashDetailsClient.GetCrashDetails(database, id);
+            var crashDetailsContent = JObject.Parse(crashDetails.Content.ReadAsStringAsync().Result);
+            var crashZipUrl = crashDetailsContent["dumpfile"];
+            using var client = new HttpClient();
+            var crashZipResponse = await client.GetStreamAsync(crashZipUrl.ToString());
+            var zipArchive = new ZipArchive(crashZipResponse);
+            var attachment = zipArchive.GetEntry(fileName);
+            using var reader = new StreamReader(attachment.Open());
+            var attachmentContent = await reader.ReadToEndAsync();
+            Assert.AreEqual(expectedContent, attachmentContent);
         }
 
         private Mock<HttpMessageHandler> CreateMockHttpClientForExceptionPost(string crashUploadUrl)
