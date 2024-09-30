@@ -123,12 +123,12 @@ namespace BugSplatDotNetStandard.Api
         {
             overridePostOptions = overridePostOptions ?? new MinidumpPostOptions();
 
-            var files = CombineListsWithDuplicatesRemoved(defaultPostOptions.Attachments, overridePostOptions.Attachments, (FileInfo file) => file.FullName)
+            var files = CombineWithDuplicatesRemoved(defaultPostOptions.Attachments, overridePostOptions.Attachments, (file) => file.FullName)
                 .Select(attachment => TryCreateInMemoryFileFromFileInfo(attachment))
                 .Where(file => file != null)
                 .ToList();
 
-            var additionalFormDataFiles = CombineListsWithDuplicatesRemoved(defaultPostOptions.FormDataParams, overridePostOptions.FormDataParams, (IFormDataParam param) => param.Name)
+            var additionalFormDataFiles = CombineWithDuplicatesRemoved(defaultPostOptions.FormDataParams, overridePostOptions.FormDataParams, (param) => param.Name)
                 .Where(file => !string.IsNullOrEmpty(file.FileName) && file.Content != null)
                 .Select(file => new InMemoryFile() { FileName = file.FileName, Content = file.Content.ReadAsByteArrayAsync().Result })
                 .ToList();
@@ -181,17 +181,16 @@ namespace BugSplatDotNetStandard.Api
             this.s3Client.Dispose();
         }
 
-        private List<T> CombineListsWithDuplicatesRemoved<T>(
-            List<T> defaultList,
-            List<T> overrideList,
+        private IEnumerable<T> CombineWithDuplicatesRemoved<T>(
+            IEnumerable<T> defaultList,
+            IEnumerable<T> overrideList,
             Func<T, string> predicate
         )
         {
             return overrideList
                 .Concat(defaultList)
                 .GroupBy(predicate)
-                .Select(group => group.First())
-                .ToList();
+                .Select(group => group.First());
         }
 
         private async Task<HttpResponseMessage> CommitS3CrashUpload(
@@ -202,14 +201,15 @@ namespace BugSplatDotNetStandard.Api
             string s3Key,
             int crashTypeId,
             IBugSplatPostOptions defaultOptions,
-            IBugSplatPostOptions overrideOptions = null
+            IBugSplatPostOptions overrideOptions
         )
         {
-            var description = GetStringValueOrDefault(overrideOptions?.Description, defaultOptions.Description);
-            var email = GetStringValueOrDefault(overrideOptions?.Email, defaultOptions.Email);
-            var key = GetStringValueOrDefault(overrideOptions?.Key, defaultOptions.Key);
-            var notes = GetStringValueOrDefault(overrideOptions?.Notes, defaultOptions.Notes);
-            var user = GetStringValueOrDefault(overrideOptions?.User, defaultOptions.User);
+            var description = GetStringValueOrDefault(overrideOptions.Description, defaultOptions.Description);
+            var email = GetStringValueOrDefault(overrideOptions.Email, defaultOptions.Email);
+            var key = GetStringValueOrDefault(overrideOptions.Key, defaultOptions.Key);
+            var notes = GetStringValueOrDefault(overrideOptions.Notes, defaultOptions.Notes);
+            var user = GetStringValueOrDefault(overrideOptions.User, defaultOptions.User);
+            var attributes = CombineWithDuplicatesRemoved(overrideOptions.Attributes, defaultOptions.Attributes, (entry) => entry.Key).ToDictionary(x => x.Key, x => x.Value);
             var body = new MultipartFormDataContent()
             {
                 { new StringContent(database), "database" },
@@ -222,7 +222,8 @@ namespace BugSplatDotNetStandard.Api
                 { new StringContent(user), "user" },
                 { new StringContent(crashTypeId.ToString()), "crashTypeId" },
                 { new StringContent(s3Key), "s3Key" },
-                { new StringContent(md5), "md5" }
+                { new StringContent(md5), "md5" },
+                { new StringContent(JsonSerializer.Serialize(attributes)), "attributes" }
             };
 
             var formDataParams = overrideOptions?.FormDataParams ?? new List<IFormDataParam>();

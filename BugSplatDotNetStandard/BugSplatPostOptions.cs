@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Dynamic;
 using System.IO;
 using System.Net.Http;
 using static BugSplatDotNetStandard.BugSplat;
@@ -15,6 +14,7 @@ namespace BugSplatDotNetStandard
             return new ExceptionPostOptions
             {
                 Attachments = options.Attachments,
+                Attributes = options.Attributes,
                 FormDataParams = options.FormDataParams,
                 Description = options.Description,
                 Email = options.Email,
@@ -36,6 +36,7 @@ namespace BugSplatDotNetStandard
             return new MinidumpPostOptions
             {
                 Attachments = options.Attachments,
+                Attributes = options.Attributes,
                 FormDataParams = options.FormDataParams,
                 Description = options.Description,
                 Email = options.Email,
@@ -57,6 +58,7 @@ namespace BugSplatDotNetStandard
             return new XmlPostOptions
             {
                 Attachments = options.Attachments,
+                Attributes = options.Attributes,
                 FormDataParams = options.FormDataParams,
                 Description = options.Description,
                 Email = options.Email,
@@ -72,6 +74,8 @@ namespace BugSplatDotNetStandard
     public class BugSplatPostOptions : IBugSplatPostOptions, IHasCrashTypeId
     {
         public List<FileInfo> Attachments { get; set; } = new List<FileInfo>();
+        
+        public Dictionary<string, string> Attributes { get; set; } = new Dictionary<string, string>();
 
         public List<IFormDataParam> FormDataParams { get; set; } = new List<IFormDataParam>();
 
@@ -87,6 +91,7 @@ namespace BugSplatDotNetStandard
             return new BugSplatPostOptions
             {
                 Attachments = options.Attachments,
+                Attributes = options.Attributes,
                 FormDataParams = options.FormDataParams,
                 Description = options.Description,
                 Email = options.Email,
@@ -137,6 +142,11 @@ namespace BugSplatDotNetStandard
         /// A list of additional attachments to be added to the post
         /// </summary>
         List<FileInfo> Attachments { get; }
+
+        /// <summary>
+        /// A dictionary of key/value attributes to be added to the post
+        /// </summary>
+        Dictionary<string, string> Attributes { get; }
 
         /// <summary>
         /// A list of form data key value pairs that will be appended to the corresponding default value

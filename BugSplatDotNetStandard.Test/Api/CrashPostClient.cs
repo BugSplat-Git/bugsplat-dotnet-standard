@@ -178,12 +178,13 @@ namespace Tests
             bugsplat.Key = "Test key";
             bugsplat.Notes = "Test notes";
             bugsplat.User = "Test user";
+            bugsplat.Attributes.Add("key", "value");
             var oauth2ApiClient = OAuth2ApiClient.Create(clientId, clientSecret)
                 .Authenticate()
                 .Result;
             var crashDetailsClient = CrashDetailsClient.Create(oauth2ApiClient);
             var sut = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default);
-            
+
             var postResult = await sut.PostException(
                 database,
                 application,
@@ -191,9 +192,9 @@ namespace Tests
                 stackTrace,
                 ExceptionPostOptions.Create(bugsplat)
             );
+            
             var postResponseContent = JObject.Parse(postResult.Content.ReadAsStringAsync().Result);
             var id = postResponseContent["crashId"].Value<int>();
-            
             var crashDetails = await crashDetailsClient.GetCrashDetails(database, id);
             var crashDetailsContent = JObject.Parse(crashDetails.Content.ReadAsStringAsync().Result);
             Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);
@@ -202,6 +203,7 @@ namespace Tests
             Assert.AreEqual(bugsplat.Key, crashDetailsContent["appKey"].Value<string>());
             Assert.AreEqual(bugsplat.Notes, crashDetailsContent["comments"].Value<string>());
             Assert.AreEqual(bugsplat.User, crashDetailsContent["user"].Value<string>());
+            Assert.AreEqual(JsonSerializer.Serialize(bugsplat.Attributes), crashDetailsContent["attributes"].Value<string>().Replace(" ", string.Empty));
         }
 
         [Test]
@@ -229,7 +231,7 @@ namespace Tests
                     }
                 }
             };
-            
+
             var postResult = await sut.PostMinidump(
                 database,
                 application,

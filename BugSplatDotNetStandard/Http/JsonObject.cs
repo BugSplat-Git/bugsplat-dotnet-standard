@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization.Json;
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -19,7 +20,7 @@ namespace BugSplatDotNetStandard.Http
         {
             this.json = json;
         }
-                
+        
         public string GetValue(params string[] path)
         {
             var jsonBytes = Encoding.UTF8.GetBytes(json);
@@ -28,6 +29,71 @@ namespace BugSplatDotNetStandard.Http
             var root = XElement.Load(jsonReader);
             var key = string.Join("/", path);
             return root.XPathSelectElement($"//{key}").Value;
+        }
+
+        public override string ToString()
+        {
+            return json;
+        }
+
+        public static JsonObject Create(Dictionary<string, string> dictionary)
+        {
+            return new JsonObject(JsonSerializer.Serialize(dictionary));
+        }
+    }
+
+    public static class JsonSerializer
+    {
+        public static string Serialize(Dictionary<string, string> dictionary)
+        {
+            if (dictionary == null)
+                return "null";
+
+            var sb = new StringBuilder();
+            sb.Append("{");
+
+            var isFirst = true;
+            foreach (var kvp in dictionary)
+            {
+                if (!isFirst)
+                    sb.Append(",");
+
+                sb.Append($"\"{EscapeJsonString(kvp.Key)}\":\"{EscapeJsonString(kvp.Value)}\"");
+                isFirst = false;
+            }
+
+            sb.Append("}");
+            return sb.ToString();
+        }
+
+        private static string EscapeJsonString(string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return string.Empty;
+
+            var sb = new StringBuilder();
+            foreach (char c in str)
+            {
+                switch (c)
+                {
+                    case '\"': sb.Append("\\\""); break;
+                    case '\\': sb.Append("\\\\"); break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    default:
+                        // Check if the character is outside the range of printable ASCII characters
+                        // ASCII 32 is space, and 127 is DEL. Characters outside this range need to be escaped.
+                        if (c < 32 || c > 127)
+                            sb.Append($"\\u{(int)c:X4}");
+                        else
+                            sb.Append(c);
+                        break;
+                }
+            }
+            return sb.ToString();
         }
     }
 }
