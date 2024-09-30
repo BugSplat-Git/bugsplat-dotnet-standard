@@ -128,7 +128,7 @@ namespace BugSplatDotNetStandard.Api
                 .Where(file => file != null)
                 .ToList();
 
-            var additionalFormDataFiles = CombineListsWithDuplicatesRemoved(defaultPostOptions.FormDataParams, overridePostOptions.FormDataParams, (IFormDataParam file) => file.Name)
+            var additionalFormDataFiles = CombineListsWithDuplicatesRemoved(defaultPostOptions.FormDataParams, overridePostOptions.FormDataParams, (IFormDataParam param) => param.Name)
                 .Where(file => !string.IsNullOrEmpty(file.FileName) && file.Content != null)
                 .Select(file => new InMemoryFile() { FileName = file.FileName, Content = file.Content.ReadAsByteArrayAsync().Result })
                 .ToList();
@@ -257,7 +257,7 @@ namespace BugSplatDotNetStandard.Api
             var baseUrl = this.CreateBaseUrlFromDatabase(database);
             var path = $"{baseUrl}/api/getCrashUploadUrl";
             var route = $"{path}?database={database}&appName={application}&appVersion={version}&crashPostSize={crashPostSize}";
-            
+
             return await httpClient.GetAsync(route);
         }
 
