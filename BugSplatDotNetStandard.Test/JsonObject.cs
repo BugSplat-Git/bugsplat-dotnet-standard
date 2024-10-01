@@ -49,7 +49,7 @@ namespace Tests
         {
             var key = "key";
             var value = "\"\\\b\f\n\r\t";
-            var expectedValue = "\"\\\"\\\\\\b\\f\\n\\r\\t\"";
+            var expectedValue = "\\\"\\\\\\b\\f\\n\\r\\t";
             var expected = $@"{{""{key}"":""{expectedValue}""}}";
             var dictionary = new Dictionary<string, string>()
             {
