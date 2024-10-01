@@ -20,6 +20,11 @@ namespace BugSplatDotNetStandard
         public List<FileInfo> Attachments { get; } = new List<FileInfo>();
 
         /// <summary>
+        /// A dictionary of key/value attributes to be added at post time
+        /// </summary>
+        public Dictionary<string, string> Attributes { get; } = new Dictionary<string, string>();
+
+        /// <summary>
         /// An identifier that tells the BugSplat backend how to process uploaded exceptions
         /// </summary>
         public ExceptionTypeId ExceptionType { get; set; } = ExceptionTypeId.DotNetStandard;
