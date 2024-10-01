@@ -30,16 +30,6 @@ namespace BugSplatDotNetStandard.Http
             var key = string.Join("/", path);
             return root.XPathSelectElement($"//{key}").Value;
         }
-
-        public override string ToString()
-        {
-            return json;
-        }
-
-        public static JsonObject Create(Dictionary<string, string> dictionary)
-        {
-            return new JsonObject(JsonSerializer.Serialize(dictionary));
-        }
     }
 
     public static class JsonSerializer
