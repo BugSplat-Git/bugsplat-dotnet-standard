@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -11,14 +12,21 @@ namespace BugSplatDotNetStandard.Utils
 
         public static InMemoryFile FromFileInfo(FileInfo fileInfo)
         {
-            using (FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (MemoryStream memoryStream = new MemoryStream())
+            const int bufferSize = 81920; // 80 KB buffer
+            using (var fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, bufferSize))
             {
-                fileStream.CopyTo(memoryStream);
-                return new InMemoryFile()
+                var bytes = new byte[fileInfo.Length];
+                int bytesRead, totalBytesRead = 0;
+
+                while ((bytesRead = fileStream.Read(bytes, totalBytesRead, Math.Min(bufferSize, bytes.Length - totalBytesRead))) > 0)
+                {
+                    totalBytesRead += bytesRead;
+                }
+
+                return new InMemoryFile
                 {
                     FileName = fileInfo.Name,
-                    Content = memoryStream.ToArray()
+                    Content = bytes
                 };
             }
         }
@@ -30,7 +38,6 @@ namespace BugSplatDotNetStandard.Utils
         FileInfo CreateZipFile(string zipFileFullName, IEnumerable<FileInfo> files);
         string CreateZipFileFullName(string inputFileName);
         Stream CreateZipFileStream(string zipFileFullName);
-        
     }
 
     internal class ZipUtils : IZipUtils
