@@ -11,6 +11,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    env:
+      BUGSPLAT_DATABASE: ${{ secrets.BUGSPLAT_DATABASE }}
+      BUGSPLAT_EMAIL: ${{ secrets.BUGSPLAT_EMAIL }}
+      BUGSPLAT_PASSWORD: ${{ secrets.BUGSPLAT_PASSWORD }}
+      BUGSPLAT_CLIENT_ID: ${{ secrets.BUGSPLAT_CLIENT_ID }}
+      BUGSPLAT_CLIENT_SECRET: ${{ secrets.BUGSPLAT_CLIENT_SECRET }}
+    
     steps:
     - uses: actions/checkout@v3
     
