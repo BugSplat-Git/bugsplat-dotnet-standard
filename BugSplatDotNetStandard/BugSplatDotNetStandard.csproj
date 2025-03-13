@@ -9,14 +9,14 @@
     <Copyright>Copyright BugSplat, All Rights Reserved</Copyright>
     <PackageProjectUrl>https://www.bugsplat.com</PackageProjectUrl>
     <PackageTags>bugsplat crash reporting reporter unhandled exception error catch analytics debug debugging debugger stack trace line numbers net uwp core mono unity xamarin maui</PackageTags>
-    <AssemblyVersion>4.2.1.0</AssemblyVersion>
-    <FileVersion>4.2.1.0</FileVersion>
+    <AssemblyVersion>4.2.2.0</AssemblyVersion>
+    <FileVersion>4.2.2.0</FileVersion>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/BugSplat-Git/bugsplat-dotnet-standard</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>4.2.1.0</Version>
+    <Version>4.2.2.0</Version>
     <PackageReleaseNotes>
-      * Reduce memory consumption when uploading crash reports
+      * Fix errors thrown by Post could cause recursive report uploads
     </PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
