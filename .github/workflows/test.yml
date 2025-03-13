@@ -1,0 +1,36 @@
+name: .NET Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    env:
+      BUGSPLAT_DATABASE: ${{ secrets.BUGSPLAT_DATABASE }}
+      BUGSPLAT_EMAIL: ${{ secrets.BUGSPLAT_EMAIL }}
+      BUGSPLAT_PASSWORD: ${{ secrets.BUGSPLAT_PASSWORD }}
+      BUGSPLAT_CLIENT_ID: ${{ secrets.BUGSPLAT_CLIENT_ID }}
+      BUGSPLAT_CLIENT_SECRET: ${{ secrets.BUGSPLAT_CLIENT_SECRET }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore
+    
+    - name: Test
+      run: dotnet test BugSplatDotNetStandard.Test/BugSplatDotNetStandard.Test.csproj --no-build --verbosity normal 
