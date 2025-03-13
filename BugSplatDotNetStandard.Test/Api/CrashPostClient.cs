@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +12,8 @@ using Moq.Protected;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using static Tests.StackTraceFactory;
+using System.Net.Http;
+using System.Net;
 using System.IO.Compression;
 
 namespace Tests
