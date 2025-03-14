@@ -21,7 +21,7 @@ WriteLine("Signing $nupkgPath...")
 
 # Requires folder containing nuget.exe be added to PATH
 # https://www.nuget.org/downloads
-$signOutput = [string](nuget.exe sign $nupkgPath -CertificatePath .\BugSplat.pfx -Timestamper http://timestamp.comodoca.com/)
+$signOutput = [string](nuget.exe sign $nupkgPath -Timestamper http://timestamp.digicert.com -CertificateFingerprint "057FF69F3B0084B085C731769EE237567AE5F30FC45AB0A75EE9AE1BE365DA52" -HashAlgorithm SHA256 -Verbosity detailed -Overwrite)
 
 WriteLine("$signOutput")
 
