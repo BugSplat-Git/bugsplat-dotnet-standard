@@ -20,7 +20,7 @@ namespace BugSplatDotNetStandard.Http
         {
             this.json = json;
         }
-        
+
         public string GetValue(params string[] path)
         {
             var jsonBytes = Encoding.UTF8.GetBytes(json);
@@ -29,6 +29,18 @@ namespace BugSplatDotNetStandard.Http
             var root = XElement.Load(jsonReader);
             var key = string.Join("/", path);
             return root.XPathSelectElement($"//{key}").Value;
+        }
+        
+        public string TryGetValue(params string[] path)
+        {
+            try
+            {
+                return GetValue(path);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 

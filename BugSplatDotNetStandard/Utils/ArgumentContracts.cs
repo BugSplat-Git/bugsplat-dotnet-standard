@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using BugSplatDotNetStandard.Api;
 
@@ -21,9 +23,25 @@ namespace BugSplatDotNetStandard.Utils
             }
         }
 
+        internal static void ThrowIfArgumentIsNullOrEmpty(byte[] argument, string name)
+        {
+            if (argument == null || argument.Length == 0)
+            {
+                throw new ArgumentException($"{name} cannot be null or empty!");
+            }
+        }
+
         internal static void ThrowIfArgumentIsNullOrEmpty(string argument, string name)
         {
             if (string.IsNullOrEmpty(argument))
+            {
+                throw new ArgumentException($"{name} cannot be null or empty!");
+            }
+        }
+
+        internal static void ThrowIfArgumentIsNullOrEmpty<T>(IEnumerable<T> collection, string name)
+        {
+            if (collection == null || !collection.Any())
             {
                 throw new ArgumentException($"{name} cannot be null or empty!");
             }

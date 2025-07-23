@@ -26,19 +26,12 @@ namespace Tests
             {
                 StatusCode = HttpStatusCode.OK
             };
-            var s3UploadFileBytesResponse = new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-            };
-            s3UploadFileBytesResponse.Headers.Add("ETag", "\"test\"");
+            s3UploadFileStreamResponse.Headers.Add("ETag", "\"test\"");
 
             var mockS3Client = new Mock<IS3Client>();
             mockS3Client
                 .Setup(s => s.UploadFileStreamToPresignedURL(It.IsAny<Uri>(), It.IsAny<Stream>()))
                 .ReturnsAsync(s3UploadFileStreamResponse);
-            mockS3Client
-                .Setup(s => s.UploadFileBytesToPresignedURL(It.IsAny<Uri>(), It.IsAny<byte[]>()))
-                .ReturnsAsync(s3UploadFileBytesResponse);
             
             return new FakeS3ClientFactory(mockS3Client.Object);
         }

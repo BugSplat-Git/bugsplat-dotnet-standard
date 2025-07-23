@@ -15,6 +15,8 @@ using static Tests.StackTraceFactory;
 using System.Net.Http;
 using System.Net;
 using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 namespace Tests
 {
@@ -117,6 +119,26 @@ namespace Tests
         }
 
         [Test]
+        [Explicit]
+        public void CrashPostClient_PostMinidump_Returns400IfFileIsTooBig()
+        {
+            var bugsplat = new BugSplat(database, application, version);
+            var sut = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default);
+            var largeFile = CreateLargeTempFile(1000 * 1024 * 1024); // 1 GB
+
+            Assert.ThrowsAsync<Exception>(async () =>
+            {
+                await sut.PostMinidump(
+                    database,
+                    application,
+                    version,
+                    largeFile,
+                    MinidumpPostOptions.Create(bugsplat)
+                );
+            }, "Failed to parse upload url: crash post size limit exceeded");
+        }
+
+        [Test]
         public void CrashPostClient_PostException_ShouldNotThrowIfAttachmentLocked()
         {
             var stackTrace = CreateStackTrace();
@@ -192,7 +214,7 @@ namespace Tests
                 stackTrace,
                 ExceptionPostOptions.Create(bugsplat)
             );
-            
+
             var postResponseContent = JObject.Parse(postResult.Content.ReadAsStringAsync().Result);
             var id = postResponseContent["crashId"].Value<int>();
             var crashDetails = await crashDetailsClient.GetCrashDetails(database, id);
@@ -276,6 +298,37 @@ namespace Tests
                .ReturnsAsync(commitCrashUploadUrlReponse);
 
             return handlerMock;
+        }
+
+        private static FileInfo CreateLargeTempFile(long sizeInBytes, string fileNamePrefix = "LargeTestFile")
+        {
+            if (sizeInBytes < 0)
+        {
+            throw new ArgumentException("Size cannot be negative", nameof(sizeInBytes));
+        }
+
+        string tempFilePath = Path.Combine(Path.GetTempPath(), $"{fileNamePrefix}_{Guid.NewGuid()}.tmp");
+        const int bufferSize = 81920;
+        byte[] buffer = new byte[bufferSize];
+
+        using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize))
+        {
+            fileStream.SetLength(sizeInBytes);
+
+            long bytesWritten = 0;
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                while (bytesWritten < sizeInBytes)
+                {
+                    int bytesToWrite = (int)Math.Min(bufferSize, sizeInBytes - bytesWritten);
+                    rng.GetBytes(buffer, 0, bytesToWrite);
+                    fileStream.Write(buffer, 0, bytesToWrite);
+                    bytesWritten += bytesToWrite;
+                }
+            }
+        }
+
+        return new FileInfo(tempFilePath);
         }
     }
 }
