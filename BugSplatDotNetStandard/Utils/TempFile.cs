@@ -24,7 +24,7 @@ namespace BugSplatDotNetStandard.Utils
             catch (Exception ex)
             {
                 // Log or handle the exception as needed
-                Console.WriteLine($"Error creating temp file: {ex.Message}");
+                Console.Error.WriteLine($"Error creating temp file: {ex.Message}");
                 return null;
             }
         }
@@ -48,7 +48,7 @@ namespace BugSplatDotNetStandard.Utils
             ThrowIfArgumentIsNullOrEmpty(filesToZip, "filesToZip");
 
             var tempFolder = CreateTempFolder();
-            var zipFileName = Path.GetRandomFileName();
+            var zipFileName = Path.GetRandomFileName().Replace(".", "_") + ".zip";
             var zipFileFullName = Path.Combine(tempFolder.FullName, zipFileName);
 
             using (var zipFile = ZipFile.Open(zipFileFullName, ZipArchiveMode.Create))
@@ -78,7 +78,7 @@ namespace BugSplatDotNetStandard.Utils
             catch (Exception ex)
             {
                 // Log or handle the exception as needed
-                Console.WriteLine($"Error creating zip entry for {file.Name}: {ex.Message}, skipping...");
+                Console.Error.WriteLine($"Error creating zip entry for {file.Name}: {ex.Message}, skipping...");
             }
         }
     }
@@ -105,13 +105,20 @@ namespace BugSplatDotNetStandard.Utils
 
         public void Dispose()
         {
-            var tempFolder = File.Directory;
-
-            File.Delete();
-
-            if (tempFolder != null && tempFolder.Exists)
+            try
             {
-                tempFolder.Delete(true);
+                var tempFolder = File.Directory;
+
+                File.Delete();
+
+                if (tempFolder != null && tempFolder.Exists)
+                {
+                    tempFolder.Delete(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error disposing temp file {File.FullName}: {ex.Message}");
             }
         }
     }
