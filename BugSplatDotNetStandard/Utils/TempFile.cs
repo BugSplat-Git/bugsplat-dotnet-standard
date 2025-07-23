@@ -80,7 +80,6 @@ namespace BugSplatDotNetStandard.Utils
             }
             catch (Exception ex)
             {
-                // Log or handle the exception as needed
                 Console.Error.WriteLine($"Error creating zip entry for {file.Name}: {ex.Message}, skipping...");
             }
         }
