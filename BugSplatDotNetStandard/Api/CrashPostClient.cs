@@ -16,7 +16,7 @@ namespace BugSplatDotNetStandard.Api
 {
     internal class CrashPostClient : IDisposable
     {
-        internal IZipUtils ZipUtils { get; set; } = new ZipUtils();
+        public ITempFileFactory TempFileFactory { get; set; } = new TempFileFactory();
         private HttpClient httpClient;
         private IS3Client s3Client;
 
@@ -41,15 +41,17 @@ namespace BugSplatDotNetStandard.Api
             ExceptionPostOptions overridePostOptions = null
         )
         {
-            var inMemoryExceptionFile = new InMemoryFile() { FileName = "Callstack.txt", Content = Encoding.UTF8.GetBytes(stackTrace) };
-            return await PostInMemoryCrashFile(
-                database,
-                application,
-                version,
-                inMemoryExceptionFile,
-                defaultPostOptions,
-                overridePostOptions
-            );
+            using (var stackTraceTempFile = TempFileFactory.CreateFromBytes("Callstack.txt", Encoding.UTF8.GetBytes(stackTrace)))
+            {
+                return await PostCrashFile(
+                    database,
+                    application,
+                    version,
+                    stackTraceTempFile.File,
+                    defaultPostOptions,
+                    overridePostOptions
+                );
+            }
         }
 
         public async Task<HttpResponseMessage> PostMinidump(
@@ -61,12 +63,11 @@ namespace BugSplatDotNetStandard.Api
             MinidumpPostOptions overridePostOptions = null
         )
         {
-            var inMemoryDmpFile = TryCreateInMemoryFileFromFileInfo(minidumpFileInfo);
-            return await PostInMemoryCrashFile(
+            return await PostCrashFile(
                 database,
                 application,
                 version,
-                inMemoryDmpFile,
+                minidumpFileInfo,
                 defaultPostOptions,
                 overridePostOptions
             );
@@ -81,12 +82,11 @@ namespace BugSplatDotNetStandard.Api
             XmlPostOptions overridePostOptions = null
         )
         {
-            var inMemoryXmlFile = TryCreateInMemoryFileFromFileInfo(xmlFileInfo);
-            return await PostInMemoryCrashFile(
+            return await PostCrashFile(
                 database,
                 application,
                 version,
-                inMemoryXmlFile,
+                xmlFileInfo,
                 defaultPostOptions,
                 overridePostOptions
             );
@@ -101,48 +101,64 @@ namespace BugSplatDotNetStandard.Api
             BugSplatPostOptions overridePostOptions = null
         )
         {
-            var inMemoryCrashFile = TryCreateInMemoryFileFromFileInfo(crashFileInfo);
-            return await PostInMemoryCrashFile(
-                database,
-                application,
-                version,
-                inMemoryCrashFile,
-                defaultPostOptions,
-                overridePostOptions
-            );
+            overridePostOptions = overridePostOptions ?? new MinidumpPostOptions();
+
+            var additionalFormDataTempFiles = new List<ITempFile>();
+
+            try
+            {
+                additionalFormDataTempFiles = CombineWithDuplicatesRemoved(defaultPostOptions.FormDataParams, overridePostOptions.FormDataParams, (param) => param.Name)
+                    .Where(file => !string.IsNullOrEmpty(file.FileName) && file.Content != null)
+                    .Select(param => TempFileFactory.TryCreateFromBytes(param.FileName, param.Content.ReadAsByteArrayAsync().Result))
+                    .Where(temp => temp != null && temp.File.Exists)
+                    .ToList();
+
+                var additionalFormDataFiles = additionalFormDataTempFiles.Select(temp => temp.File).ToList();
+                var attachments = CombineWithDuplicatesRemoved(defaultPostOptions.Attachments, overridePostOptions.Attachments, (file) => file.FullName)
+                    .Where(file => file != null && file.Exists)
+                    .ToList();
+
+                attachments.AddRange(additionalFormDataFiles);
+
+                return await PostCrash(
+                    database,
+                    application,
+                    version,
+                    crashFileInfo,
+                    attachments,
+                    defaultPostOptions,
+                    overridePostOptions
+                );
+            }
+            finally
+            {
+                foreach (var tempFile in additionalFormDataTempFiles)
+                {
+                    tempFile?.Dispose();
+                }
+            }
         }
 
-        private async Task<HttpResponseMessage> PostInMemoryCrashFile(
+        private async Task<HttpResponseMessage> PostCrash(
             string database,
             string application,
             string version,
-            InMemoryFile crashFile,
+            FileInfo crashFileInfo,
+            IEnumerable<FileInfo> attachments,
             BugSplatPostOptions defaultPostOptions,
             BugSplatPostOptions overridePostOptions = null
         )
         {
-            overridePostOptions = overridePostOptions ?? new MinidumpPostOptions();
+            var files = new List<FileInfo> { crashFileInfo };
+            files.AddRange(attachments);
 
-            var files = CombineWithDuplicatesRemoved(defaultPostOptions.Attachments, overridePostOptions.Attachments, (file) => file.FullName)
-                .Select(attachment => TryCreateInMemoryFileFromFileInfo(attachment))
-                .Where(file => file != null)
-                .ToList();
-
-            var additionalFormDataFiles = CombineWithDuplicatesRemoved(defaultPostOptions.FormDataParams, overridePostOptions.FormDataParams, (param) => param.Name)
-                .Where(file => !string.IsNullOrEmpty(file.FileName) && file.Content != null)
-                .Select(file => new InMemoryFile() { FileName = file.FileName, Content = file.Content.ReadAsByteArrayAsync().Result })
-                .ToList();
-
-            files.Add(crashFile);
-            files.AddRange(additionalFormDataFiles);
-
-            var zipBytes = ZipUtils.CreateInMemoryZipFile(files);
+            using (var tempZipFile = TempFileFactory.CreateTempZip(files))
             using (
                 var crashUploadResponse = await GetCrashUploadUrl(
                     database,
                     application,
                     version,
-                    zipBytes.Length
+                    tempZipFile.File.Length
                 )
             )
             {
@@ -150,7 +166,8 @@ namespace BugSplatDotNetStandard.Api
 
                 var presignedUrl = await GetPresignedUrlFromResponse(crashUploadResponse);
 
-                using (var uploadFileResponse = await this.s3Client.UploadFileBytesToPresignedURL(presignedUrl, zipBytes))
+                using (var zipFileStream = tempZipFile.CreateFileStream())
+                using (var uploadFileResponse = await s3Client.UploadFileStreamToPresignedURL(presignedUrl, zipFileStream))
                 {
                     ThrowIfHttpRequestFailed(uploadFileResponse);
 
@@ -252,7 +269,7 @@ namespace BugSplatDotNetStandard.Api
             string database,
             string application,
             string version,
-            int crashPostSize
+            long crashPostSize
         )
         {
             var baseUrl = this.CreateBaseUrlFromDatabase(database);
@@ -271,31 +288,23 @@ namespace BugSplatDotNetStandard.Api
 
         private async Task<Uri> GetPresignedUrlFromResponse(HttpResponseMessage response)
         {
-            try
-            {
-                var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync();
 
-                var jsonObj = new JsonObject(json);
-                var url = jsonObj.GetValue("url");
+            var jsonObj = new JsonObject(json);
+            var url = jsonObj.TryGetValue("url");
+            var message = jsonObj.TryGetValue("message");
 
-                return new Uri(url);
-            }
-            catch (Exception ex)
+            if (string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(message))
             {
-                throw new Exception("Failed to parse crash upload url", ex);
+                throw new Exception($"Failed to parse upload url: {message}");
             }
-        }
 
-        private InMemoryFile TryCreateInMemoryFileFromFileInfo(FileInfo fileInfo)
-        {
-            try
+            if (string.IsNullOrEmpty(url))
             {
-                return InMemoryFile.FromFileInfo(fileInfo);
+                throw new Exception("Failed to parse upload url");
             }
-            catch
-            {
-                return null;
-            }
+
+            return new Uri(url);
         }
     }
 }

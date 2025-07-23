@@ -14,7 +14,7 @@ namespace BugSplatDotNetStandard.Api
     /// </summary>
     public class VersionsClient : IDisposable
     {
-        internal IZipUtils ZipUtils { get; set; } = new ZipUtils();
+        public ITempFileFactory TempFileFactory { get; set; } = new TempFileFactory();
         private IBugSplatApiClient bugsplatApiClient;
         private IS3Client s3Client;
 
@@ -79,11 +79,9 @@ namespace BugSplatDotNetStandard.Api
 
             ThrowIfNotAuthenticated(bugsplatApiClient);
 
-            var zipFileFullName = ZipUtils.CreateZipFileFullName(symbolFileInfo.Name);
-            try
+            var files = new List<FileInfo> { symbolFileInfo };
+            using (var tempZipFile = TempFileFactory.CreateTempZip(files))
             {
-                var zipFileInfo = ZipUtils.CreateZipFile(zipFileFullName, new List<FileInfo>() { symbolFileInfo });
-
                 var optionalSymbolFileLastWriteTimeStr = string.Empty;
                 var optionalModuleName = string.Empty;
                 if (!string.IsNullOrEmpty(optionalSignature))
@@ -94,14 +92,14 @@ namespace BugSplatDotNetStandard.Api
                     optionalModuleName = symbolFileInfo.Name;
                 }
 
-                using (var zipFileStream = ZipUtils.CreateZipFileStream(zipFileFullName))
+                using (var zipFileStream = tempZipFile.CreateFileStream())
                 using (
                     var presignedUrlResponse = await this.GetSymbolUploadUrl(
                             database,
                             application,
                             version,
-                            zipFileInfo.Length,
-                            zipFileInfo.Name,
+                            tempZipFile.File.Length,
+                            tempZipFile.File.Name,
                             optionalModuleName,
                             optionalSymbolFileLastWriteTimeStr,
                             optionalSignature
@@ -118,15 +116,11 @@ namespace BugSplatDotNetStandard.Api
                     return uploadFileResponse;
                 }
             }
-            finally
-            {
-                File.Delete(zipFileFullName);
-            }
         }
 
         public void Dispose()
         {
-            this.s3Client.Dispose();
+            s3Client.Dispose();
         }
 
         private async Task<Uri> GetPresignedUrlFromResponse(HttpResponseMessage response)

@@ -86,13 +86,22 @@ namespace Tests
         {
             var application = "my-net-crasher";
             var version = Guid.NewGuid().ToString();
-            var zipFileFullName = "test.zip";
+            var zipFileFullName = string.Empty;
             var symbolFileInfo = new FileInfo("Files/myConsoleCrasher.pdb");
             var mockApiClient = CreateMockBugSplatApiClient();
             var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
-            var mockZipUtils = CreateMockZipUtils(zipFileFullName);
+            var realTempFileFactory = new TempFileFactory();
+            var mockTempFileFactory = new Mock<ITempFileFactory>();
+            mockTempFileFactory
+                .Setup(factory => factory.CreateTempZip(It.IsAny<IEnumerable<FileInfo>>()))
+                .Returns((IEnumerable<FileInfo> files) =>
+                {
+                    var result = realTempFileFactory.CreateTempZip(files);
+                    zipFileFullName = result.File.FullName;
+                    return result;
+                });
             var sut = new VersionsClient(mockApiClient, mockS3ClientFactory);
-            sut.ZipUtils = mockZipUtils;
+            sut.TempFileFactory = mockTempFileFactory.Object;
 
             var uploadResult = sut.UploadSymbolFile(
                 database,
@@ -118,24 +127,6 @@ namespace Tests
                 .Setup(c => c.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>()))
                 .ReturnsAsync(presignedUrlResponse);
             return mockApiClient.Object;
-        }
-
-        private IZipUtils CreateMockZipUtils(string zipFileFullName)
-        {
-            if (File.Exists(zipFileFullName))
-            {
-                File.Delete(zipFileFullName);
-            }
-
-            var zipFileInfo = new ZipUtils().CreateZipFile(zipFileFullName, new List<FileInfo>());
-            var mockZipUtils = new Mock<IZipUtils>();
-            mockZipUtils
-                .Setup(z => z.CreateZipFileFullName(It.IsAny<string>()))
-                .Returns(zipFileFullName);
-            mockZipUtils
-                .Setup(z => z.CreateZipFile(It.IsAny<string>(), It.IsAny<IEnumerable<FileInfo>>()))
-                .Returns(zipFileInfo);
-           return mockZipUtils.Object;
         }
     }
 }
