@@ -23,7 +23,6 @@ namespace BugSplatDotNetStandard.Utils
             }
             catch (Exception ex)
             {
-                // Log or handle the exception as needed
                 Console.Error.WriteLine($"Error creating temp file: {ex.Message}");
                 return null;
             }
@@ -37,7 +36,6 @@ namespace BugSplatDotNetStandard.Utils
             var tempFolder = CreateTempFolder();
             var tempFileName = Path.Combine(tempFolder.FullName, fileName);
 
-            // TODO BG use something that can work around file locks
             File.WriteAllBytes(tempFileName, bytes);
 
             return new TempFile(new FileInfo(tempFileName));
@@ -67,6 +65,11 @@ namespace BugSplatDotNetStandard.Utils
             var tempFileFolder = Path.Combine(Path.GetTempPath(), "bugsplat-unity", Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempFileFolder);
             return new DirectoryInfo(tempFileFolder);
+        }
+
+        private static void WriteChunkedBytesToFile()
+        {
+            
         }
 
         private static void SafeCreateZipEntry(ZipArchive zipArchive, FileInfo file)
