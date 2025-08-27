@@ -8,7 +8,7 @@
 
 ## 👋 Introduction
 
-BugSplatDotNetStandard allows you to capture and track exceptions on all platforms that support .NET Standard 2.0. This includes, .NET Core, Universal Windows Platform, Mono and more! Before continuing with the tutorial please make sure you have completed the following checklist:
+BugSplatDotNetStandard allows you to capture and track exceptions on all platforms that support .NET Standard 2.0. This includes .NET Core, Universal Windows Platform, Mono, and more! Before continuing with the tutorial, please make sure you have completed the following checklist:
 
 - [Register](https://app.bugsplat.com/v2/sign-up) as a new BugSplat user.
 - [Log in](https://app.bugsplat.com/cognito/login) using your email address.
@@ -31,7 +31,7 @@ After you've installed the NuGet package, add a using statement for the `BugSpla
 using BugSplatDotNetStandard;
 ```
 
-Create a new instance of `BugSplat` providing it your database, application, and version. It's best to do this at the entry point of your application. Several defaults can be provided to BugSplat. You can provide default values for things such as description, email, key, notes, user, file attachments, and attributes.
+Create a new instance of `BugSplat`, providing it with your database, application, and version. It's best to do this at the entry point of your application. Several defaults can be provided to BugSplat. You can provide default values for various fields, including description, email, key, notes, user, file attachments, and attributes.
 
 ```cs
 var bugsplat = new BugSplat(database, application, version);
@@ -63,7 +63,7 @@ Additionally, `Post` can be used to upload minidumps to BugSplat.
 await bugsplat.Post(new FileInfo("/path/to/minidump.dmp"));
 ```
 
-The default values for description, email, key and user can be overridden in the call to Post. Additional attachments can also be specified in the call to Post. If BugSplat can't read an attachment (e.g. the file is in use), it will be skipped. Please note that the total size of the Post body and all attachments is limited to **20MB** by default.
+The default values for description, email, key, and user can be overridden in the call to Post. Additional attachments can also be specified in the call to the `Post` method. If BugSplat can't read an attachment (e.g., the file is in use), it will be skipped. Please note that the total size of the Post body and all attachments is limited to **100MB** by default.
 
 ```cs
 var options = new ExceptionPostOptions()
@@ -80,16 +80,16 @@ await bugsplat.Post(ex, options);
 
 ## ✅ Verification
 
-Once you've generated an error, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have to correct database selected in the dropdown menu. You should see a new crash report under the **Recent Crashes** section:
+Once you've generated an error, navigate to the BugSplat [Dashboard](https://app.bugsplat.com/v2/dashboard) and ensure you have the correct database selected in the dropdown menu. You should see a new crash report under the **Recent Crashes** section:
 
-![BugSplat Dashboard Page](https://user-images.githubusercontent.com/2646053/165813342-289ab25d-90fa-4110-8922-8bbdab687803.png)
+<img width="1728" height="970" alt="BugSplat Dashboard Page" src="https://github.com/user-attachments/assets/d8684cfe-83f0-49dd-b50c-2419e49d9431" />
 
  Click the link in the **ID** column to see details about the crash:
 
-![BugSplat Crash Page](https://user-images.githubusercontent.com/2646053/165813564-0d81640f-235e-4dd0-b19f-522493fd92d7.png)
+<img width="1728" height="790" alt="BugSplat Crash Details" src="https://github.com/user-attachments/assets/deacdc98-40cd-4f85-bec1-c457c97a6932" />
 
 That’s it! Your application is now configured to post crash reports to BugSplat.
 
 ## 👷 Support
 
-If you have any additional questions, please email or [support](mailto:support@bugsplat.com) team, join us on [Discord](https://discord.gg/K4KjjRV5ve), or reach out via the chat in our web application.
+If you have any additional questions, please email our [support](mailto:support@bugsplat.com) team, join us on [Discord](https://discord.gg/K4KjjRV5ve), or reach out via the chat in our web application.
