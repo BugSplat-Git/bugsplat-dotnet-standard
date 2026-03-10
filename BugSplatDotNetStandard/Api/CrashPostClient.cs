@@ -92,6 +92,36 @@ namespace BugSplatDotNetStandard.Api
             );
         }
 
+        public async Task<HttpResponseMessage> PostFeedback(
+            string database,
+            string application,
+            string version,
+            string title,
+            FeedbackPostOptions defaultPostOptions,
+            FeedbackPostOptions overridePostOptions = null
+        )
+        {
+            var description = overridePostOptions?.Description ?? defaultPostOptions?.Description ?? string.Empty;
+            var feedbackJson = $"{{\"title\":{JsonEscape(title)},\"description\":{JsonEscape(description)}}}";
+            using (var feedbackTempFile = TempFileFactory.CreateFromBytes("feedback.json", Encoding.UTF8.GetBytes(feedbackJson)))
+            {
+                return await PostCrashFile(
+                    database,
+                    application,
+                    version,
+                    feedbackTempFile.File,
+                    defaultPostOptions,
+                    overridePostOptions
+                );
+            }
+        }
+
+        private static string JsonEscape(string value)
+        {
+            if (value == null) return "\"\"";
+            return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t") + "\"";
+        }
+
         public async Task<HttpResponseMessage> PostCrashFile(
             string database,
             string application,

@@ -71,6 +71,26 @@ namespace BugSplatDotNetStandard
         }
     }
 
+    public class FeedbackPostOptions : BugSplatPostOptions
+    {
+        public override int CrashTypeId { get => 36; }
+        public static FeedbackPostOptions Create(IBugSplatPostOptions options)
+        {
+            return new FeedbackPostOptions
+            {
+                Attachments = options.Attachments,
+                Attributes = options.Attributes,
+                FormDataParams = options.FormDataParams,
+                Description = options.Description,
+                Email = options.Email,
+                Key = options.Key,
+                IpAddress = options.IpAddress,
+                Notes = options.Notes,
+                User = options.User
+            };
+        }
+    }
+
     public class BugSplatPostOptions : IBugSplatPostOptions, IHasCrashTypeId
     {
         public List<FileInfo> Attachments { get; set; } = new List<FileInfo>();
