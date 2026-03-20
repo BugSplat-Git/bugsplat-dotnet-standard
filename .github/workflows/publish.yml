@@ -1,0 +1,72 @@
+name: Publish to NuGet
+
+permissions:
+  contents: read
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack
+        run: dotnet pack BugSplatDotNetStandard/BugSplatDotNetStandard.csproj --configuration Release --no-build -p:Version=${{ steps.version.outputs.VERSION }} -o ./nupkg
+
+      - name: Decode DigiCert client certificate
+        run: echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > "${{ runner.temp }}/cert.p12"
+        shell: bash
+
+      - name: Setup DigiCert Software Trust Manager
+        uses: digicert/code-signing-software-trust-action@v1
+        env:
+          SM_HOST: ${{ vars.SM_HOST }}
+          SM_API_KEY: ${{ secrets.SM_API_KEY }}
+          SM_CLIENT_CERT_FILE: ${{ runner.temp }}\cert.p12
+          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+
+      - name: Sync certificate to Windows store
+        run: smctl windows certsync --keypair-alias=${{ secrets.SM_KEYPAIR_ALIAS }}
+        shell: cmd
+        env:
+          SM_HOST: ${{ vars.SM_HOST }}
+          SM_API_KEY: ${{ secrets.SM_API_KEY }}
+          SM_CLIENT_CERT_FILE: ${{ runner.temp }}\cert.p12
+          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+
+      - name: Sign NuGet package
+        run: nuget sign ./nupkg/*.nupkg -Timestamper http://timestamp.digicert.com -CertificateFingerprint ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} -HashAlgorithm SHA256 -Verbosity detailed -Overwrite
+        shell: cmd
+
+      - name: Verify signature
+        run: nuget verify -All ./nupkg/*.nupkg
+        shell: cmd
+
+      - name: Push to NuGet
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Clean up
+        if: always()
+        run: rm -f "${{ runner.temp }}/cert.p12"
+        shell: bash

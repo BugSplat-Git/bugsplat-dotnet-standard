@@ -278,5 +278,43 @@ namespace BugSplatDotNetStandard
                 return null;
             }
         }
+
+        /// <summary>
+        /// Post user feedback to BugSplat
+        /// </summary>
+        /// <param name="title">The feedback title, used as the stack key for grouping</param>
+        /// <param name="description">Additional feedback context</param>
+        /// <param name="options">Optional parameters that will override the defaults if provided</param>
+        /// <returns>HttpResponseMessage if successful, null if arguments are invalid or if an error occurs</returns>
+        public async Task<HttpResponseMessage> PostFeedback(string title, string description = "", FeedbackPostOptions options = null)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Console.Error.WriteLine("Error: title cannot be null, empty, or only white space when posting feedback to BugSplat");
+                return null;
+            }
+
+            try
+            {
+                using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
+                {
+                    var defaultOptions = FeedbackPostOptions.Create(this);
+                    defaultOptions.Description = description;
+                    return await crashPostClient.PostFeedback(
+                        Database,
+                        Application,
+                        Version,
+                        title,
+                        defaultOptions,
+                        options
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error posting feedback to BugSplat: {ex.Message}");
+                return null;
+            }
+        }
     }
 }

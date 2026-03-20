@@ -96,5 +96,34 @@ namespace Tests
 
             Assert.AreEqual(expected, result);
         }
+
+        [Test]
+        public void JsonSerializer_Serialize_ShouldEmitNullForNullValues()
+        {
+            var dictionary = new Dictionary<string, string>()
+            {
+                { "key", null }
+            };
+
+            var result = JsonSerializer.Serialize(dictionary);
+
+            Assert.AreEqual(@"{""key"":null}", result);
+        }
+
+        [Test]
+        public void JsonSerializer_EscapeJsonString_ShouldBePubliclyAccessible()
+        {
+            var result = JsonSerializer.EscapeJsonString("hello \"world\"");
+
+            Assert.AreEqual("hello \\\"world\\\"", result);
+        }
+
+        [Test]
+        public void JsonSerializer_EscapeJsonString_ShouldHandleEmoji()
+        {
+            var result = JsonSerializer.EscapeJsonString("😀");
+
+            Assert.AreEqual("\\uD83D\\uDE00", result);
+        }
     }
 }
