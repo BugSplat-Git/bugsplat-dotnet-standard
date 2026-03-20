@@ -11,6 +11,10 @@ on:
 jobs:
   publish:
     runs-on: windows-latest
+    env:
+      SM_HOST: ${{ vars.SM_HOST }}
+      SM_API_KEY: ${{ secrets.SM_API_KEY }}
+      SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +23,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v2
 
       - name: Extract version from tag
         id: version
@@ -38,33 +45,41 @@ jobs:
         run: echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > "${{ runner.temp }}/cert.p12"
         shell: bash
 
-      - name: Setup DigiCert Software Trust Manager
-        uses: digicert/code-signing-software-trust-action@v1
-        env:
-          SM_HOST: ${{ vars.SM_HOST }}
-          SM_API_KEY: ${{ secrets.SM_API_KEY }}
-          SM_CLIENT_CERT_FILE: ${{ runner.temp }}\cert.p12
-          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+      - name: Set SM_CLIENT_CERT_FILE
+        run: echo "SM_CLIENT_CERT_FILE=${{ runner.temp }}\cert.p12" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Install SMCTL and KSP
+        run: |
+          curl -X GET https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi
+          msiexec /i smtools-windows-x64.msi /quiet /qn
+          echo C:\Program Files\DigiCert\DigiCert One Signing Manager Tools>> %GITHUB_PATH%
+        shell: cmd
 
       - name: Sync certificate to Windows store
         run: smctl windows certsync --keypair-alias=${{ secrets.SM_KEYPAIR_ALIAS }}
         shell: cmd
-        env:
-          SM_HOST: ${{ vars.SM_HOST }}
-          SM_API_KEY: ${{ secrets.SM_API_KEY }}
-          SM_CLIENT_CERT_FILE: ${{ runner.temp }}\cert.p12
-          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
 
       - name: Sign NuGet package
-        run: nuget sign ./nupkg/*.nupkg -Timestamper http://timestamp.digicert.com -CertificateFingerprint ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} -HashAlgorithm SHA256 -Verbosity detailed -Overwrite
-        shell: cmd
+        run: |
+          Get-ChildItem ./nupkg/*.nupkg | ForEach-Object {
+            nuget sign $_.FullName -Timestamper http://timestamp.digicert.com -CertificateFingerprint ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} -HashAlgorithm SHA256 -Verbosity detailed -Overwrite
+          }
+        shell: pwsh
 
       - name: Verify signature
-        run: nuget verify -All ./nupkg/*.nupkg
-        shell: cmd
+        run: |
+          Get-ChildItem ./nupkg/*.nupkg | ForEach-Object {
+            nuget verify -All $_.FullName
+          }
+        shell: pwsh
 
       - name: Push to NuGet
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: |
+          Get-ChildItem ./nupkg/*.nupkg | ForEach-Object {
+            dotnet nuget push $_.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }
+        shell: pwsh
 
       - name: Clean up
         if: always()
