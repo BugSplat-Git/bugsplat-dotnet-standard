@@ -299,10 +299,7 @@ namespace BugSplatDotNetStandard
                 using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
                 {
                     var defaultOptions = FeedbackPostOptions.Create(this);
-                    if (!string.IsNullOrEmpty(description))
-                    {
-                        defaultOptions.Description = description;
-                    }
+                    defaultOptions.Description = description;
                     return await crashPostClient.PostFeedback(
                         Database,
                         Application,

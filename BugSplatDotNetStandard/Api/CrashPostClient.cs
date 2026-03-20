@@ -101,7 +101,7 @@ namespace BugSplatDotNetStandard.Api
             FeedbackPostOptions overridePostOptions = null
         )
         {
-            var description = overridePostOptions?.Description ?? defaultPostOptions?.Description ?? string.Empty;
+            var description = GetStringValueOrDefault(overridePostOptions?.Description, defaultPostOptions?.Description);
             var feedbackJson = JsonSerializer.Serialize(new Dictionary<string, string>
             {
                 { "title", title },

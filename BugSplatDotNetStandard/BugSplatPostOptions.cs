@@ -73,7 +73,8 @@ namespace BugSplatDotNetStandard
 
     public class FeedbackPostOptions : BugSplatPostOptions
     {
-        public override int CrashTypeId { get => 36; }
+        private const int FeedbackCrashTypeId = 36;
+        public override int CrashTypeId { get => FeedbackCrashTypeId; }
         public static FeedbackPostOptions Create(IBugSplatPostOptions options)
         {
             return new FeedbackPostOptions
