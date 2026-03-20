@@ -9,7 +9,8 @@ namespace Tests
     [TestFixture]
     public class SymbolUploaderTest
     {
-        private string database;        private string clientId;
+        private string database;
+        private string clientId;
         private string clientSecret;
 
         [OneTimeSetUp]

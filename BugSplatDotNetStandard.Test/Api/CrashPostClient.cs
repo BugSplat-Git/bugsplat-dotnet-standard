@@ -277,6 +277,179 @@ namespace Tests
             Assert.AreEqual(expectedContent, attachmentContent);
         }
 
+        [Test]
+        public async Task CrashPostClient_PostFeedback_ShouldReturn200()
+        {
+            var bugsplat = new BugSplat(database, application, version);
+            var getCrashUrl = "https://fake.url.com";
+            var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
+
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
+
+            var postResult = await sut.PostFeedback(
+                database,
+                application,
+                version,
+                "Test feedback title",
+                FeedbackPostOptions.Create(bugsplat)
+            );
+
+            Assert.AreEqual(HttpStatusCode.OK, postResult.StatusCode);
+        }
+
+        [Test]
+        public async Task CrashPostClient_PostFeedback_ShouldUseCrashTypeId36()
+        {
+            var bugsplat = new BugSplat(database, application, version);
+            var getCrashUrl = "https://fake.url.com";
+            HttpRequestMessage capturedCommitRequest = null;
+            var mockHttp = CreateMockHttpClientWithCapture(getCrashUrl, req => capturedCommitRequest = req);
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
+
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
+
+            await sut.PostFeedback(
+                database,
+                application,
+                version,
+                "Test feedback title",
+                FeedbackPostOptions.Create(bugsplat)
+            );
+
+            Assert.IsNotNull(capturedCommitRequest);
+            var content = capturedCommitRequest.Content as MultipartFormDataContent;
+            Assert.IsNotNull(content);
+            var formData = await content.ReadAsStringAsync();
+            Assert.That(formData, Does.Contain("36"));
+        }
+
+        [Test]
+        public async Task CrashPostClient_PostFeedback_ShouldConstructFeedbackJsonWithEscaping()
+        {
+            var bugsplat = new BugSplat(database, application, version);
+            bugsplat.Description = "Line1\nLine2\twith \"quotes\"";
+            var getCrashUrl = "https://fake.url.com";
+            var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
+
+            byte[] capturedBytes = null;
+            var mockTempFileFactory = new Mock<ITempFileFactory>();
+            var mockTempFile = new Mock<ITempFile>();
+            mockTempFile.Setup(t => t.File).Returns(new FileInfo("Files/minidump.dmp"));
+            mockTempFileFactory
+                .Setup(f => f.CreateFromBytes("feedback.json", It.IsAny<byte[]>()))
+                .Callback<string, byte[]>((name, bytes) => capturedBytes = bytes)
+                .Returns(mockTempFile.Object);
+            mockTempFileFactory
+                .Setup(f => f.CreateTempZip(It.IsAny<IEnumerable<FileInfo>>()))
+                .Returns(mockTempFile.Object);
+            mockTempFile
+                .Setup(t => t.CreateFileStream(It.IsAny<FileMode>(), It.IsAny<FileAccess>()))
+                .Returns(new MemoryStream(new byte[] { 0 }));
+
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
+            sut.TempFileFactory = mockTempFileFactory.Object;
+
+            await sut.PostFeedback(
+                database,
+                application,
+                version,
+                "Title with \"quotes\"",
+                FeedbackPostOptions.Create(bugsplat)
+            );
+
+            Assert.IsNotNull(capturedBytes);
+            var feedbackJson = Encoding.UTF8.GetString(capturedBytes);
+            Assert.That(feedbackJson, Does.Contain("Title with \\\"quotes\\\""));
+            Assert.That(feedbackJson, Does.Contain("Line1\\nLine2\\twith \\\"quotes\\\""));
+        }
+
+        [Test]
+        public async Task CrashPostClient_PostFeedback_ShouldUseOverrideDescription()
+        {
+            var bugsplat = new BugSplat(database, application, version);
+            bugsplat.Description = "Default description";
+            var getCrashUrl = "https://fake.url.com";
+            var mockHttp = CreateMockHttpClientForExceptionPost(getCrashUrl);
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var mockS3ClientFactory = FakeS3ClientFactory.CreateMockS3ClientFactory();
+
+            byte[] capturedBytes = null;
+            var mockTempFileFactory = new Mock<ITempFileFactory>();
+            var mockTempFile = new Mock<ITempFile>();
+            mockTempFile.Setup(t => t.File).Returns(new FileInfo("Files/minidump.dmp"));
+            mockTempFileFactory
+                .Setup(f => f.CreateFromBytes("feedback.json", It.IsAny<byte[]>()))
+                .Callback<string, byte[]>((name, bytes) => capturedBytes = bytes)
+                .Returns(mockTempFile.Object);
+            mockTempFileFactory
+                .Setup(f => f.CreateTempZip(It.IsAny<IEnumerable<FileInfo>>()))
+                .Returns(mockTempFile.Object);
+            mockTempFile
+                .Setup(t => t.CreateFileStream(It.IsAny<FileMode>(), It.IsAny<FileAccess>()))
+                .Returns(new MemoryStream(new byte[] { 0 }));
+
+            var sut = new CrashPostClient(httpClientFactory, mockS3ClientFactory);
+            sut.TempFileFactory = mockTempFileFactory.Object;
+
+            var overrideOptions = new FeedbackPostOptions
+            {
+                Description = "Override description"
+            };
+
+            await sut.PostFeedback(
+                database,
+                application,
+                version,
+                "Test title",
+                FeedbackPostOptions.Create(bugsplat),
+                overrideOptions
+            );
+
+            Assert.IsNotNull(capturedBytes);
+            var feedbackJson = Encoding.UTF8.GetString(capturedBytes);
+            Assert.That(feedbackJson, Does.Contain("Override description"));
+            Assert.That(feedbackJson, Does.Not.Contain("Default description"));
+        }
+
+        private Mock<HttpMessageHandler> CreateMockHttpClientWithCapture(string crashUploadUrl, Action<HttpRequestMessage> captureCallback)
+        {
+            var getCrashUploadUrlResponse = new HttpResponseMessage();
+            getCrashUploadUrlResponse.StatusCode = HttpStatusCode.OK;
+            getCrashUploadUrlResponse.Content = new StringContent($"{{ \"url\": \"{crashUploadUrl}\" }}");
+
+            var commitCrashUploadUrlReponse = new HttpResponseMessage();
+            commitCrashUploadUrlReponse.StatusCode = HttpStatusCode.OK;
+
+            var callCount = 0;
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock
+               .Protected()
+               .Setup<Task<HttpResponseMessage>>(
+                  "SendAsync",
+                  ItExpr.IsAny<HttpRequestMessage>(),
+                  ItExpr.IsAny<CancellationToken>()
+               )
+               .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+               {
+                   callCount++;
+                   if (callCount == 1)
+                       return getCrashUploadUrlResponse;
+                   captureCallback(request);
+                   return commitCrashUploadUrlReponse;
+               });
+
+            return handlerMock;
+        }
+
         private Mock<HttpMessageHandler> CreateMockHttpClientForExceptionPost(string crashUploadUrl)
         {
             var getCrashUploadUrlResponse = new HttpResponseMessage();
