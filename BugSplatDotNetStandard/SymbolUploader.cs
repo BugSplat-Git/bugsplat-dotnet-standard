@@ -39,18 +39,6 @@ namespace BugSplatDotNetStandard
         }
 
         /// <summary>
-        /// Create a BugSplat SymbolUploader via an BugSplat email/password pair.
-        /// </summary>
-        /// <param name="email">BugSplat account email</param>
-        /// <param name="password">BugSplat account password</param>
-        public static SymbolUploader CreateSymbolUploader(string email, string password)
-        {
-            return new SymbolUploader(
-                BugSplatApiClient.Create(email, password)
-            );
-        }
-
-        /// <summary>
         /// Upload a symbol file to BugSplat
         /// </summary>
         /// <param name="database">BugSplat database to upload symbols too</param>
