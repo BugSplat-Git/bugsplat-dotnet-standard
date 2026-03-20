@@ -102,7 +102,11 @@ namespace BugSplatDotNetStandard.Api
         )
         {
             var description = overridePostOptions?.Description ?? defaultPostOptions?.Description ?? string.Empty;
-            var feedbackJson = $"{{\"title\":{JsonEscape(title)},\"description\":{JsonEscape(description)}}}";
+            var feedbackJson = JsonSerializer.Serialize(new Dictionary<string, string>
+            {
+                { "title", title },
+                { "description", description }
+            });
             using (var feedbackTempFile = TempFileFactory.CreateFromBytes("feedback.json", Encoding.UTF8.GetBytes(feedbackJson)))
             {
                 return await PostCrashFile(
@@ -114,12 +118,6 @@ namespace BugSplatDotNetStandard.Api
                     overridePostOptions
                 );
             }
-        }
-
-        private static string JsonEscape(string value)
-        {
-            if (value == null) return "\"\"";
-            return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t") + "\"";
         }
 
         public async Task<HttpResponseMessage> PostCrashFile(
