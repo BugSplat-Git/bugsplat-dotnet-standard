@@ -17,6 +17,7 @@ using System.Net;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using BugSplatDotNetStandard.Utils;
 
 namespace Tests
 {
