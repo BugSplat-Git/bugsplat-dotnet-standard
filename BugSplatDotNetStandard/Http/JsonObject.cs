@@ -60,7 +60,13 @@ namespace BugSplatDotNetStandard.Http
                 if (!isFirst)
                     sb.Append(",");
 
-                sb.Append($"\"{EscapeJsonString(kvp.Key)}\":\"{EscapeJsonString(kvp.Value)}\"");
+                sb.Append($"\"{EscapeJsonString(kvp.Key)}\":");
+
+                if (kvp.Value == null)
+                    sb.Append("null");
+                else
+                    sb.Append($"\"{EscapeJsonString(kvp.Value)}\"");
+
                 isFirst = false;
             }
 
@@ -68,12 +74,12 @@ namespace BugSplatDotNetStandard.Http
             return sb.ToString();
         }
 
-        private static string EscapeJsonString(string str)
+        public static string EscapeJsonString(string str)
         {
             if (string.IsNullOrEmpty(str))
                 return string.Empty;
 
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(str.Length + 16);
             foreach (char c in str)
             {
                 switch (c)
@@ -86,12 +92,17 @@ namespace BugSplatDotNetStandard.Http
                     case '\r': sb.Append("\\r"); break;
                     case '\t': sb.Append("\\t"); break;
                     default:
-                        // Check if the character is outside the range of printable ASCII characters
-                        // ASCII 32 is space, and 127 is DEL. Characters outside this range need to be escaped.
                         if (c < 32 || c > 127)
+                        {
+                            // Characters above U+FFFF (e.g. emoji) are represented as surrogate pairs
+                            // in C# strings. Each half is emitted as a separate \uXXXX escape, which is
+                            // valid JSON per RFC 8259.
                             sb.Append($"\\u{(int)c:X4}");
+                        }
                         else
+                        {
                             sb.Append(c);
+                        }
                         break;
                 }
             }
