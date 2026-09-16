@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using BugSplatDotNetStandard.Http;
 using NUnit.Framework;
 
@@ -30,6 +32,124 @@ namespace Tests
             var result = obj.GetValue("bug", "splat");
 
             Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void JsonObject_GetValue_ShouldThrowForAbsentKey()
+        {
+            var json = @"{ ""url"": ""https://bugsplat.com"" }";
+            var obj = new JsonObject(json);
+
+            var ex = Assert.Throws<KeyNotFoundException>(() => obj.GetValue("message"));
+
+            StringAssert.Contains("message", ex.Message);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnValueForTopLevelKey()
+        {
+            var expected = "https://bugsplat.com";
+            var json = $@"{{ ""url"": ""{expected}"" }}";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue("url");
+
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnValueForNestedKey()
+        {
+            var expected = "rocks!";
+            var json = $@"{{ ""bug"": {{  ""splat"": ""{expected}"" }} }}";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue("bug", "splat");
+
+            Assert.AreEqual(expected, result);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnNullForAbsentKey()
+        {
+            var json = @"{ ""url"": ""https://bugsplat.com"" }";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue("message");
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnNullForAbsentNestedKey()
+        {
+            var json = @"{ ""bug"": { ""splat"": ""rocks!"" } }";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue("bug", "crash");
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnNullForMalformedJson()
+        {
+            var obj = new JsonObject("not json");
+
+            var result = obj.TryGetValue("url");
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldNotThrowInternallyForAbsentKey()
+        {
+            // A missing key is a lookup miss, not an exception. Every successful crash post
+            // asks for "message" and doesn't find it, so a throw here stops any attached
+            // debugger inside the SDK instead of at the customer's crash.
+            var json = @"{ ""url"": ""https://bugsplat.com"" }";
+            var obj = new JsonObject(json);
+
+            var thrown = RecordFirstChanceExceptions(() => obj.TryGetValue("message"));
+
+            Assert.IsEmpty(thrown, $"TryGetValue threw internally: {string.Join(", ", thrown)}");
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldNotThrowInternallyForPresentKey()
+        {
+            var json = @"{ ""url"": ""https://bugsplat.com"" }";
+            var obj = new JsonObject(json);
+
+            var thrown = RecordFirstChanceExceptions(() => obj.TryGetValue("url"));
+
+            Assert.IsEmpty(thrown, $"TryGetValue threw internally: {string.Join(", ", thrown)}");
+        }
+
+        // Records every exception raised on this thread while action runs, caught or not
+        private static List<string> RecordFirstChanceExceptions(Action action)
+        {
+            var thrown = new List<string>();
+            var threadId = Environment.CurrentManagedThreadId;
+            EventHandler<FirstChanceExceptionEventArgs> handler = (sender, args) =>
+            {
+                if (Environment.CurrentManagedThreadId == threadId)
+                {
+                    thrown.Add(args.Exception.ToString());
+                }
+            };
+
+            AppDomain.CurrentDomain.FirstChanceException += handler;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                AppDomain.CurrentDomain.FirstChanceException -= handler;
+            }
+
+            return thrown;
         }
     }
 

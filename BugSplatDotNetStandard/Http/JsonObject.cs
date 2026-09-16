@@ -21,26 +21,47 @@ namespace BugSplatDotNetStandard.Http
             this.json = json;
         }
 
+        /// <summary>
+        /// Returns the value at path, throwing KeyNotFoundException if path is absent.
+        /// </summary>
         public string GetValue(params string[] path)
+        {
+            var value = SelectValue(path);
+
+            if (value == null)
+            {
+                throw new KeyNotFoundException($"JSON does not contain a value at \"{string.Join("/", path)}\"");
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Returns the value at path, or null if path is absent or the JSON is malformed.
+        /// </summary>
+        public string TryGetValue(params string[] path)
+        {
+            try
+            {
+                // An absent path is expected here, so look it up directly rather than
+                // letting GetValue throw an exception we would immediately catch.
+                return SelectValue(path);
+            }
+            catch
+            {
+                // Malformed JSON still throws from the reader
+                return null;
+            }
+        }
+
+        private string SelectValue(string[] path)
         {
             var jsonBytes = Encoding.UTF8.GetBytes(json);
             var quotas = new XmlDictionaryReaderQuotas();
             var jsonReader = JsonReaderWriterFactory.CreateJsonReader(jsonBytes, quotas);
             var root = XElement.Load(jsonReader);
             var key = string.Join("/", path);
-            return root.XPathSelectElement($"//{key}").Value;
-        }
-        
-        public string TryGetValue(params string[] path)
-        {
-            try
-            {
-                return GetValue(path);
-            }
-            catch
-            {
-                return null;
-            }
+            return root.XPathSelectElement($"//{key}")?.Value;
         }
     }
 
