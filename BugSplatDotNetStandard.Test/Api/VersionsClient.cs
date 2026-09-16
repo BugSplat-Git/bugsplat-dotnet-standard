@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 using BugSplatDotNetStandard.Api;
 using BugSplatDotNetStandard.Http;
 using BugSplatDotNetStandard.Utils;
@@ -34,6 +35,66 @@ namespace Tests
         {
             var versionsClient = VersionsClient.Create(new BugSplatApiClient("fred", "******", HttpClientFactory.Default));
             Assert.True(versionsClient is VersionsClient);
+        }
+
+        [Test]
+        public void VersionsClient_UploadSymbolFile_ShouldThrowIfResponseIsMissingUrl()
+        {
+            var sut = CreateVersionsClientForPresignedUrlResponse("{ \"code\": 1 }");
+
+            var ex = Assert.ThrowsAsync<Exception>(async () => await UploadSymbolFile(sut));
+
+            Assert.AreEqual("Failed to parse symbol upload url", ex.Message);
+        }
+
+        [Test]
+        public void VersionsClient_UploadSymbolFile_ShouldIncludeMessageWhenUrlIsMissing()
+        {
+            var sut = CreateVersionsClientForPresignedUrlResponse("{ \"message\": \"quota exceeded\" }");
+
+            var ex = Assert.ThrowsAsync<Exception>(async () => await UploadSymbolFile(sut));
+
+            Assert.AreEqual("Failed to parse symbol upload url: quota exceeded", ex.Message);
+        }
+
+        [Test]
+        public void VersionsClient_UploadSymbolFile_ShouldNotMatchNestedUrl()
+        {
+            // A nested url used to satisfy the root level lookup via XPath //key
+            var sut = CreateVersionsClientForPresignedUrlResponse("{ \"error\": { \"url\": \"https://nested.example.com\" } }");
+
+            var ex = Assert.ThrowsAsync<Exception>(async () => await UploadSymbolFile(sut));
+
+            Assert.AreEqual("Failed to parse symbol upload url", ex.Message);
+        }
+
+        [Test]
+        public void VersionsClient_UploadSymbolFile_ShouldWrapMalformedJson()
+        {
+            var sut = CreateVersionsClientForPresignedUrlResponse("not json");
+
+            var ex = Assert.ThrowsAsync<Exception>(async () => await UploadSymbolFile(sut));
+
+            Assert.AreEqual("Failed to parse symbol upload url", ex.Message);
+            Assert.NotNull(ex.InnerException);
+        }
+
+        private static Task<HttpResponseMessage> UploadSymbolFile(VersionsClient sut)
+        {
+            return sut.UploadSymbolFile(database, "my-net-crasher", "1.0.0", new FileInfo("Files/myConsoleCrasher.pdb"));
+        }
+
+        private static VersionsClient CreateVersionsClientForPresignedUrlResponse(string responseContent)
+        {
+            var mockApiClient = new Mock<IBugSplatApiClient>();
+            mockApiClient
+                .SetupGet(c => c.Authenticated)
+                .Returns(true);
+            mockApiClient
+                .Setup(c => c.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>()))
+                .ReturnsAsync(new HttpResponseMessage() { Content = new StringContent(responseContent) });
+
+            return new VersionsClient(mockApiClient.Object, FakeS3ClientFactory.CreateMockS3ClientFactory());
         }
     }
 

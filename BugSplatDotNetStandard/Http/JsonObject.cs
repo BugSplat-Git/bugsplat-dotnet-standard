@@ -1,67 +1,107 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
-using System.Xml.XPath;
 
 namespace BugSplatDotNetStandard.Http
 {
     // We have opted to not introduce a 3rd-party dependency to better support Unity.
-    // When Unity moves to .NET 6 we can replace this with System.Text.Json.
+    // bugsplat-unity vendors BugSplatDotNetStandard.dll as a bare plugin with no NuGet
+    // restore, so a PackageReference here would have to be hand-shipped into Unity, where
+    // vendored System.* copies collide with the engine's own assemblies.
+    // System.Text.Json remains the intended replacement once that constraint lifts.
     // More information about Unity's plans to update to .NET 6 can be found here:
     // https://forum.unity.com/threads/unity-future-net-development-status.1092205/
 
-    public class JsonObject
+    internal class JsonObject
     {
-        private string json;
+        // JsonReaderWriterFactory maps each JSON value to an element carrying a type
+        // attribute, which is omitted for strings. A property whose name is not a valid
+        // XML name is mapped to <item item="the name"> rather than <the name>.
+        private const string TypeAttributeName = "type";
+        private const string ItemElementName = "item";
+        private const string StringType = "string";
+        private const string ObjectType = "object";
 
+        private static readonly HashSet<string> ValueTypes = new HashSet<string>()
+        {
+            StringType, "number", "boolean"
+        };
+
+        private readonly XElement root;
+
+        /// <summary>
+        /// Parses json. Throws if json is not well formed.
+        /// </summary>
         public JsonObject(string json)
-        {
-            this.json = json;
-        }
-
-        /// <summary>
-        /// Returns the value at path, throwing KeyNotFoundException if path is absent.
-        /// </summary>
-        public string GetValue(params string[] path)
-        {
-            var value = SelectValue(path);
-
-            if (value == null)
-            {
-                throw new KeyNotFoundException($"JSON does not contain a value at \"{string.Join("/", path)}\"");
-            }
-
-            return value;
-        }
-
-        /// <summary>
-        /// Returns the value at path, or null if path is absent or the JSON is malformed.
-        /// </summary>
-        public string TryGetValue(params string[] path)
-        {
-            try
-            {
-                // An absent path is expected here, so look it up directly rather than
-                // letting GetValue throw an exception we would immediately catch.
-                return SelectValue(path);
-            }
-            catch
-            {
-                // Malformed JSON still throws from the reader
-                return null;
-            }
-        }
-
-        private string SelectValue(string[] path)
         {
             var jsonBytes = Encoding.UTF8.GetBytes(json);
             var quotas = new XmlDictionaryReaderQuotas();
             var jsonReader = JsonReaderWriterFactory.CreateJsonReader(jsonBytes, quotas);
-            var root = XElement.Load(jsonReader);
-            var key = string.Join("/", path);
-            return root.XPathSelectElement($"//{key}")?.Value;
+            root = XElement.Load(jsonReader);
+        }
+
+        /// <summary>
+        /// Walks path from the root of the document one property at a time and returns true
+        /// if it lands on a string, number or boolean, which is written to value. Returns
+        /// false if a property along the way is absent, or the value is null, an object or
+        /// an array. Never throws, so an absent property costs nothing.
+        /// </summary>
+        public bool TryGetValue(out string value, params string[] path)
+        {
+            value = null;
+
+            if (path == null || path.Length == 0)
+            {
+                return false;
+            }
+
+            var element = root;
+            foreach (var name in path)
+            {
+                element = FindProperty(element, name);
+
+                if (element == null)
+                {
+                    return false;
+                }
+            }
+
+            if (!ValueTypes.Contains(GetElementType(element)))
+            {
+                return false;
+            }
+
+            value = element.Value;
+            return true;
+        }
+
+        private static XElement FindProperty(XElement parent, string name)
+        {
+            if (!ObjectType.Equals(GetElementType(parent)))
+            {
+                return null;
+            }
+
+            // Compare names rather than calling Element(name), which throws when name is
+            // not a valid XML name
+            return parent.Elements().FirstOrDefault(child => name.Equals(GetPropertyName(child)));
+        }
+
+        private static string GetPropertyName(XElement element)
+        {
+            var itemAttribute = element.Attribute(ItemElementName);
+
+            return ItemElementName.Equals(element.Name.LocalName) && itemAttribute != null
+                ? itemAttribute.Value
+                : element.Name.LocalName;
+        }
+
+        private static string GetElementType(XElement element)
+        {
+            return element.Attribute(TypeAttributeName)?.Value ?? StringType;
         }
     }
 

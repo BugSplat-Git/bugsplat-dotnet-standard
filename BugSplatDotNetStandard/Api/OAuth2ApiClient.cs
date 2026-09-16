@@ -76,8 +76,19 @@ namespace BugSplatDotNetStandard.Api
 
             var json = await authorizeResponse.Content.ReadAsStringAsync();
             var jsonObj = new JsonObject(json);
-            var tokenType = jsonObj.GetValue("token_type");
-            var accessToken = jsonObj.GetValue("access_token");
+            jsonObj.TryGetValue(out var tokenType, "token_type");
+            jsonObj.TryGetValue(out var accessToken, "access_token");
+
+            if (string.IsNullOrEmpty(tokenType))
+            {
+                throw new Exception("Failed to authenticate: OAuth2 token response did not contain token_type");
+            }
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                throw new Exception("Failed to authenticate: OAuth2 token response did not contain access_token");
+            }
+
             var authorizeHeader = $"{tokenType} {accessToken}";
             httpClient.DefaultRequestHeaders.Remove("Authorization");
             httpClient.DefaultRequestHeaders.Add("Authorization", authorizeHeader);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using BugSplatDotNetStandard.Http;
@@ -9,42 +9,6 @@ namespace Tests
     [TestFixture]
     public class JsonObjectTest
     {
-
-        [Test]
-        public void JsonObject_GetValue_ShouldReturnValueForTopLevelKey()
-        {
-            var expected = "https://bugsplat.com";
-            var json = $@"{{ ""url"": ""{expected}"" }}";
-            var obj = new JsonObject(json);
-
-            var result = obj.GetValue("url");
-
-            Assert.AreEqual(expected, result);
-        }
-
-        [Test]
-        public void JsonObject_GetValue_ShouldReturnValueForNestedKey()
-        {
-            var expected = "rocks!";
-            var json = $@"{{ ""bug"": {{  ""splat"": ""{expected}"" }} }}";
-            var obj = new JsonObject(json);
-
-            var result = obj.GetValue("bug", "splat");
-
-            Assert.AreEqual(expected, result);
-        }
-
-        [Test]
-        public void JsonObject_GetValue_ShouldThrowForAbsentKey()
-        {
-            var json = @"{ ""url"": ""https://bugsplat.com"" }";
-            var obj = new JsonObject(json);
-
-            var ex = Assert.Throws<KeyNotFoundException>(() => obj.GetValue("message"));
-
-            StringAssert.Contains("message", ex.Message);
-        }
-
         [Test]
         public void JsonObject_TryGetValue_ShouldReturnValueForTopLevelKey()
         {
@@ -52,53 +16,140 @@ namespace Tests
             var json = $@"{{ ""url"": ""{expected}"" }}";
             var obj = new JsonObject(json);
 
-            var result = obj.TryGetValue("url");
+            var result = obj.TryGetValue(out var value, "url");
 
-            Assert.AreEqual(expected, result);
+            Assert.True(result);
+            Assert.AreEqual(expected, value);
         }
 
         [Test]
         public void JsonObject_TryGetValue_ShouldReturnValueForNestedKey()
         {
             var expected = "rocks!";
-            var json = $@"{{ ""bug"": {{  ""splat"": ""{expected}"" }} }}";
+            var json = $@"{{ ""bug"": {{ ""splat"": ""{expected}"" }} }}";
             var obj = new JsonObject(json);
 
-            var result = obj.TryGetValue("bug", "splat");
+            var result = obj.TryGetValue(out var value, "bug", "splat");
 
-            Assert.AreEqual(expected, result);
+            Assert.True(result);
+            Assert.AreEqual(expected, value);
         }
 
         [Test]
-        public void JsonObject_TryGetValue_ShouldReturnNullForAbsentKey()
+        public void JsonObject_TryGetValue_ShouldNotMatchNestedKeyForRootLevelLookup()
+        {
+            // The XPath //key this replaced matched a key anywhere in the document, so a
+            // nested url satisfied a root level lookup and the wrong value was uploaded to
+            var json = @"{ ""error"": { ""url"": ""https://nested.example.com"" } }";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue(out var value, "url");
+
+            Assert.False(result);
+            Assert.IsNull(value);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldNotMatchDeeperPathForShorterLookup()
+        {
+            var json = @"{ ""a"": { ""b"": { ""c"": ""deep"" } } }";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue(out var value, "b", "c");
+
+            Assert.False(result);
+            Assert.IsNull(value);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnFalseForAbsentKey()
         {
             var json = @"{ ""url"": ""https://bugsplat.com"" }";
             var obj = new JsonObject(json);
 
-            var result = obj.TryGetValue("message");
+            var result = obj.TryGetValue(out var value, "message");
 
-            Assert.IsNull(result);
+            Assert.False(result);
+            Assert.IsNull(value);
         }
 
         [Test]
-        public void JsonObject_TryGetValue_ShouldReturnNullForAbsentNestedKey()
+        public void JsonObject_TryGetValue_ShouldReturnFalseForAbsentNestedKey()
         {
             var json = @"{ ""bug"": { ""splat"": ""rocks!"" } }";
             var obj = new JsonObject(json);
 
-            var result = obj.TryGetValue("bug", "crash");
+            var result = obj.TryGetValue(out var value, "bug", "crash");
 
-            Assert.IsNull(result);
+            Assert.False(result);
+            Assert.IsNull(value);
         }
 
         [Test]
-        public void JsonObject_TryGetValue_ShouldReturnNullForMalformedJson()
+        public void JsonObject_TryGetValue_ShouldReturnFalseForObjectAndArrayValues()
         {
-            var obj = new JsonObject("not json");
+            var json = @"{ ""obj"": { ""a"": ""b"" }, ""arr"": [ ""a"", ""b"" ] }";
+            var obj = new JsonObject(json);
 
-            var result = obj.TryGetValue("url");
+            Assert.False(obj.TryGetValue(out var objectValue, "obj"));
+            Assert.IsNull(objectValue);
+            Assert.False(obj.TryGetValue(out var arrayValue, "arr"));
+            Assert.IsNull(arrayValue);
+        }
 
-            Assert.IsNull(result);
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnFalseForNullValue()
+        {
+            var json = @"{ ""url"": null }";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue(out var value, "url");
+
+            Assert.False(result);
+            Assert.IsNull(value);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnNumbersAndBooleansAsText()
+        {
+            var json = @"{ ""count"": 42, ""ok"": true }";
+            var obj = new JsonObject(json);
+
+            Assert.True(obj.TryGetValue(out var count, "count"));
+            Assert.AreEqual("42", count);
+            Assert.True(obj.TryGetValue(out var ok, "ok"));
+            Assert.AreEqual("true", ok);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldFindKeyThatIsNotAValidXmlName()
+        {
+            var expected = "https://bugsplat.com";
+            var json = $@"{{ ""2fa url"": ""{expected}"" }}";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue(out var value, "2fa url");
+
+            Assert.True(result);
+            Assert.AreEqual(expected, value);
+        }
+
+        [Test]
+        public void JsonObject_TryGetValue_ShouldReturnFalseForEmptyPath()
+        {
+            var json = @"{ ""url"": ""https://bugsplat.com"" }";
+            var obj = new JsonObject(json);
+
+            var result = obj.TryGetValue(out var value);
+
+            Assert.False(result);
+            Assert.IsNull(value);
+        }
+
+        [Test]
+        public void JsonObject_Constructor_ShouldThrowForMalformedJson()
+        {
+            Assert.Throws<System.Xml.XmlException>(() => new JsonObject("not json"));
         }
 
         [Test]
@@ -110,7 +161,7 @@ namespace Tests
             var json = @"{ ""url"": ""https://bugsplat.com"" }";
             var obj = new JsonObject(json);
 
-            var thrown = RecordFirstChanceExceptions(() => obj.TryGetValue("message"));
+            var thrown = RecordFirstChanceExceptions(() => obj.TryGetValue(out var value, "message"));
 
             Assert.IsEmpty(thrown, $"TryGetValue threw internally: {string.Join(", ", thrown)}");
         }
@@ -121,7 +172,7 @@ namespace Tests
             var json = @"{ ""url"": ""https://bugsplat.com"" }";
             var obj = new JsonObject(json);
 
-            var thrown = RecordFirstChanceExceptions(() => obj.TryGetValue("url"));
+            var thrown = RecordFirstChanceExceptions(() => obj.TryGetValue(out var value, "url"));
 
             Assert.IsEmpty(thrown, $"TryGetValue threw internally: {string.Join(", ", thrown)}");
         }
@@ -152,6 +203,7 @@ namespace Tests
             return thrown;
         }
     }
+
 
     [TestFixture]
     public class JsonSerializerTest
