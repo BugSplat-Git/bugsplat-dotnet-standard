@@ -30,20 +30,34 @@ namespace Tests
         }
 
         [Test]
-        public void BugSplat_Post_ShouldReturnNullIfExIsNull()
+        public void BugSplat_Post_ShouldThrowIfExIsNull()
         {
             var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-            var result = bugsplat.Post(null as Exception).Result;
-            Assert.IsNull(result);
+            Assert.ThrowsAsync<ArgumentNullException>(() => bugsplat.Post(null as Exception));
         }
 
         [Test]
-        public void BugSplat_Post_ShouldReturnNullIfStackTraceFileInfoIsNull()
+        public void BugSplat_Post_ShouldThrowIfStackTraceStringIsNull()
         {
             string stackTrace = null;
             var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-            var result = bugsplat.Post(stackTrace).Result;
-            Assert.IsNull(result);
+            Assert.ThrowsAsync<ArgumentException>(() => bugsplat.Post(stackTrace));
+        }
+
+        [Test]
+        public void BugSplat_Post_ShouldThrowIfCrashFileInfoIsNull()
+        {
+            var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+            Assert.ThrowsAsync<ArgumentNullException>(() => bugsplat.Post(null as FileInfo, new BugSplatPostOptions()));
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("   ")]
+        public void BugSplat_PostFeedback_ShouldThrowIfTitleIsBlank(string title)
+        {
+            var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
+            Assert.ThrowsAsync<ArgumentException>(() => bugsplat.PostFeedback(title));
         }
     }
 
@@ -131,11 +145,10 @@ namespace Tests
         }
 
         [Test]
-        public void BugSplat_Post_ShouldReturnNullMinidumpFileInfoIsNull()
+        public void BugSplat_Post_ShouldThrowIfMinidumpFileInfoIsNull()
         {
             var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-            var result = bugsplat.Post(null as FileInfo, MinidumpPostOptions.Create(bugsplat)).Result;
-            Assert.IsNull(result);
+            Assert.ThrowsAsync<ArgumentNullException>(() => bugsplat.Post(null as FileInfo, MinidumpPostOptions.Create(bugsplat)));
         }
 
         [Test]
@@ -166,11 +179,10 @@ namespace Tests
         }
 
         [Test]
-        public void BugSplat_Post_ShouldReturnNullIfStackTraceIsNull()
+        public void BugSplat_Post_ShouldThrowIfStackTraceIsNull()
         {
             var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-            var result = bugsplat.Post(null as string, ExceptionPostOptions.Create(bugsplat)).Result;
-            Assert.IsNull(result);
+            Assert.ThrowsAsync<ArgumentException>(() => bugsplat.Post(null as string, ExceptionPostOptions.Create(bugsplat)));
         }
 
         [Test]
@@ -201,11 +213,10 @@ namespace Tests
         }
 
         [Test]
-        public void BugSplat_Post_ShouldReturnNullIfXmlReportIsNull()
+        public void BugSplat_Post_ShouldThrowIfXmlReportIsNull()
         {
             var bugsplat = new BugSplat("fred", "my-app", "1.0.0");
-            var result = bugsplat.Post(null as FileInfo, XmlPostOptions.Create(bugsplat)).Result;
-            Assert.IsNull(result);
+            Assert.ThrowsAsync<ArgumentNullException>(() => bugsplat.Post(null as FileInfo, XmlPostOptions.Create(bugsplat)));
         }
     }
 

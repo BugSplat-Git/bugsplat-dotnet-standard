@@ -53,7 +53,7 @@ try
 }
 catch(Exception ex)
 {
-    await bugsplat.Post(exception);
+    await bugsplat.Post(ex);
 }
 ```
 
@@ -62,6 +62,8 @@ Additionally, `Post` can be used to upload minidumps to BugSplat.
 ```cs
 await bugsplat.Post(new FileInfo("/path/to/minidump.dmp"));
 ```
+
+Each `Post` method, and `PostFeedback`, returns BugSplat's `HttpResponseMessage`. Check its status code, because an error status is returned, not thrown. A request that can't reach BugSplat throws, as `HttpClient` does: `HttpRequestException` when it can't be sent, for example with no network, and `TaskCanceledException` when it times out. Invalid arguments throw `ArgumentException` or `ArgumentNullException`.
 
 The default values for description, email, key, and user can be overridden in the call to Post. Additional attachments can also be specified in the call to the `Post` method. If BugSplat can't read an attachment (e.g., the file is in use), it will be skipped. Please note that the total size of the Post body and all attachments is limited to **100MB** by default.
 

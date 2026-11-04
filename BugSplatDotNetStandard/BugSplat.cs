@@ -127,33 +127,27 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="stackTrace">A string representation of an Exception's stack trace</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>HttpResponseMessage if successful, null if arguments are invalid or if an error occurs</returns>
+        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <exception cref="ArgumentException"><paramref name="stackTrace"/> is null, empty, or only white space</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null)
         {
             if (string.IsNullOrWhiteSpace(stackTrace))
             {
-                Console.Error.WriteLine("Error: stackTrace cannot be null, empty, or only white space when posting to BugSplat");
-                return null;
+                throw new ArgumentException("stackTrace cannot be null, empty, or only white space", nameof(stackTrace));
             }
 
-            try
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
-                using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
-                {
-                    return await crashPostClient.PostException(
-                        Database,
-                        Application,
-                        Version,
-                        stackTrace,
-                        ExceptionPostOptions.Create(this),
-                        options
-                    );
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error posting exception to BugSplat: {ex.Message}");
-                return null;
+                return await crashPostClient.PostException(
+                    Database,
+                    Application,
+                    Version,
+                    stackTrace,
+                    ExceptionPostOptions.Create(this),
+                    options
+                );
             }
         }
 
@@ -162,13 +156,15 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="ex">The Exception that will be serialized and posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>HttpResponseMessage if successful, null if arguments are invalid or if an error occurs</returns>
+        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="ex"/> is null</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
         {
             if (ex == null)
             {
-                Console.Error.WriteLine("Error: exception cannot be null when posting to BugSplat");
-                return null;
+                throw new ArgumentNullException(nameof(ex));
             }
 
             return await Post(ex.ToString(), options);
@@ -179,33 +175,27 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="minidumpFileInfo">The minidump file that will be posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>HttpResponseMessage if successful, null if arguments are invalid or if an error occurs</returns>
+        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="minidumpFileInfo"/> is null</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, MinidumpPostOptions options = null)
         {
             if (minidumpFileInfo == null)
             {
-                Console.Error.WriteLine("Error: minidumpFileInfo cannot be null when posting to BugSplat");
-                return null;
+                throw new ArgumentNullException(nameof(minidumpFileInfo));
             }
 
-            try
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
-                using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
-                {
-                    return await crashPostClient.PostMinidump(
-                        Database,
-                        Application,
-                        Version,
-                        minidumpFileInfo,
-                        MinidumpPostOptions.Create(this),
-                        options
-                    );
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error posting minidump to BugSplat: {ex.Message}");
-                return null;
+                return await crashPostClient.PostMinidump(
+                    Database,
+                    Application,
+                    Version,
+                    minidumpFileInfo,
+                    MinidumpPostOptions.Create(this),
+                    options
+                );
             }
         }
 
@@ -214,33 +204,27 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="xmlFileInfo">The XML file that will be posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>HttpResponseMessage if successful, null if arguments are invalid or if an error occurs</returns>
+        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="xmlFileInfo"/> is null</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(FileInfo xmlFileInfo, XmlPostOptions options = null)
         {
             if (xmlFileInfo == null)
             {
-                Console.Error.WriteLine("Error: xmlFileInfo cannot be null when posting to BugSplat");
-                return null;
+                throw new ArgumentNullException(nameof(xmlFileInfo));
             }
 
-            try
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
-                using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
-                {
-                    return await crashPostClient.PostXmlReport(
-                        Database,
-                        Application,
-                        Version,
-                        xmlFileInfo,
-                        XmlPostOptions.Create(this),
-                        options
-                    );
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error posting XML report to BugSplat: {ex.Message}");
-                return null;
+                return await crashPostClient.PostXmlReport(
+                    Database,
+                    Application,
+                    Version,
+                    xmlFileInfo,
+                    XmlPostOptions.Create(this),
+                    options
+                );
             }
         }
 
@@ -249,33 +233,27 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="crashFileInfo">The report file that will be posted to BugSplat, can be a minidump or XML report</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>HttpResponseMessage if successful, null if arguments are invalid or if an error occurs</returns>
+        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="crashFileInfo"/> is null</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(FileInfo crashFileInfo, BugSplatPostOptions options = null)
         {
             if (crashFileInfo == null)
             {
-                Console.Error.WriteLine("Error: crashFileInfo cannot be null when posting to BugSplat");
-                return null;
+                throw new ArgumentNullException(nameof(crashFileInfo));
             }
 
-            try
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
-                using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
-                {
-                    return await crashPostClient.PostCrashFile(
-                        Database,
-                        Application,
-                        Version,
-                        crashFileInfo,
-                        BugSplatPostOptions.Create(this, CrashTypeId),
-                        options
-                    );
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error posting crash file to BugSplat: {ex.Message}");
-                return null;
+                return await crashPostClient.PostCrashFile(
+                    Database,
+                    Application,
+                    Version,
+                    crashFileInfo,
+                    BugSplatPostOptions.Create(this, CrashTypeId),
+                    options
+                );
             }
         }
 
@@ -285,35 +263,29 @@ namespace BugSplatDotNetStandard
         /// <param name="title">The feedback title, used as the stack key for grouping</param>
         /// <param name="description">Additional feedback context</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>HttpResponseMessage if successful, null if arguments are invalid or if an error occurs</returns>
+        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <exception cref="ArgumentException"><paramref name="title"/> is null, empty, or only white space</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> PostFeedback(string title, string description = "", FeedbackPostOptions options = null)
         {
             if (string.IsNullOrWhiteSpace(title))
             {
-                Console.Error.WriteLine("Error: title cannot be null, empty, or only white space when posting feedback to BugSplat");
-                return null;
+                throw new ArgumentException("title cannot be null, empty, or only white space", nameof(title));
             }
 
-            try
+            using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
             {
-                using (var crashPostClient = new CrashPostClient(HttpClientFactory.Default, S3ClientFactory.Default))
-                {
-                    var defaultOptions = FeedbackPostOptions.Create(this);
-                    defaultOptions.Description = description;
-                    return await crashPostClient.PostFeedback(
-                        Database,
-                        Application,
-                        Version,
-                        title,
-                        defaultOptions,
-                        options
-                    );
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error posting feedback to BugSplat: {ex.Message}");
-                return null;
+                var defaultOptions = FeedbackPostOptions.Create(this);
+                defaultOptions.Description = description;
+                return await crashPostClient.PostFeedback(
+                    Database,
+                    Application,
+                    Version,
+                    title,
+                    defaultOptions,
+                    options
+                );
             }
         }
     }
