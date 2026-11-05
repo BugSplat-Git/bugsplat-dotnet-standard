@@ -125,6 +125,53 @@ namespace Tests
         }
 
         [Test]
+        public void OAuth2ApiClient_Authenticate_ShouldThrowIfResponseIsMissingAccessToken()
+        {
+            var mockHttp = CreateMockHttpClientForAuthenticateSuccess("{ \"token_type\": \"Bearer\" }");
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory);
+
+            var ex = Assert.ThrowsAsync<Exception>(async () => { var result = await sut.Authenticate(); });
+
+            StringAssert.Contains("access_token", ex.Message);
+            Assert.False(sut.Authenticated);
+            Assert.False(httpClient.DefaultRequestHeaders.Contains("Authorization"));
+        }
+
+        [Test]
+        public void OAuth2ApiClient_Authenticate_ShouldThrowIfResponseIsMissingTokenType()
+        {
+            var mockHttp = CreateMockHttpClientForAuthenticateSuccess("{ \"access_token\": \"abc123\" }");
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory);
+
+            var ex = Assert.ThrowsAsync<Exception>(async () => { var result = await sut.Authenticate(); });
+
+            StringAssert.Contains("token_type", ex.Message);
+            Assert.False(sut.Authenticated);
+            Assert.False(httpClient.DefaultRequestHeaders.Contains("Authorization"));
+        }
+
+        [Test]
+        public void OAuth2ApiClient_Authenticate_ShouldNotMatchNestedAccessToken()
+        {
+            // A nested access_token used to satisfy the root level lookup via XPath //key
+            var mockHttp = CreateMockHttpClientForAuthenticateSuccess(
+                "{ \"token_type\": \"Bearer\", \"error\": { \"access_token\": \"nope\" } }"
+            );
+            var httpClient = new HttpClient(mockHttp.Object);
+            var httpClientFactory = new FakeHttpClientFactory(httpClient);
+            var sut = new OAuth2ApiClient(clientId, clientSecret, httpClientFactory);
+
+            var ex = Assert.ThrowsAsync<Exception>(async () => { var result = await sut.Authenticate(); });
+
+            StringAssert.Contains("access_token", ex.Message);
+            Assert.False(sut.Authenticated);
+        }
+
+        [Test]
         public void OAuth2ApiClient_PostAsync_ShouldMakeRequestWithAuthorizationHeader()
         {
             var accessToken = "accessTolkien!";

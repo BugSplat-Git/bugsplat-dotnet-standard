@@ -125,19 +125,34 @@ namespace BugSplatDotNetStandard.Api
 
         private async Task<Uri> GetPresignedUrlFromResponse(HttpResponseMessage response)
         {
+            string url;
+            string message;
+
             try
             {
                 var json = await response.Content.ReadAsStringAsync();
 
                 var jsonObj = new JsonObject(json);
-                var url = jsonObj.GetValue("url");
-
-                return new Uri(url);
+                jsonObj.TryGetValue(out url, "url");
+                jsonObj.TryGetValue(out message, "message");
             }
             catch (Exception ex)
             {
+                // Malformed JSON throws from the JsonObject constructor
                 throw new Exception("Failed to parse symbol upload url", ex);
             }
+
+            if (string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(message))
+            {
+                throw new Exception($"Failed to parse symbol upload url: {message}");
+            }
+
+            if (string.IsNullOrEmpty(url))
+            {
+                throw new Exception("Failed to parse symbol upload url");
+            }
+
+            return new Uri(url);
         }
 
         private async Task<HttpResponseMessage> GetSymbolUploadUrl(

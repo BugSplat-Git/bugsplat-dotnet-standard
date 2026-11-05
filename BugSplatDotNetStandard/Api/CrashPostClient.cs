@@ -318,9 +318,20 @@ namespace BugSplatDotNetStandard.Api
         {
             var json = await response.Content.ReadAsStringAsync();
 
-            var jsonObj = new JsonObject(json);
-            var url = jsonObj.TryGetValue("url");
-            var message = jsonObj.TryGetValue("message");
+            string url = null;
+            string message = null;
+
+            try
+            {
+                var jsonObj = new JsonObject(json);
+                jsonObj.TryGetValue(out url, "url");
+                jsonObj.TryGetValue(out message, "message");
+            }
+            catch
+            {
+                // Malformed JSON throws from the JsonObject constructor and is reported
+                // as a missing url by the checks below, as it was before
+            }
 
             if (string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(message))
             {
