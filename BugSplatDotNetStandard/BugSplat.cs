@@ -127,9 +127,9 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="stackTrace">A string representation of an Exception's stack trace</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <returns>BugSplat's successful response</returns>
         /// <exception cref="ArgumentException"><paramref name="stackTrace"/> is null, empty, or only white space</exception>
-        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network, or BugSplat answered with an error status</exception>
         /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(string stackTrace, ExceptionPostOptions options = null)
         {
@@ -156,9 +156,9 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="ex">The Exception that will be serialized and posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <returns>BugSplat's successful response</returns>
         /// <exception cref="ArgumentNullException"><paramref name="ex"/> is null</exception>
-        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network, or BugSplat answered with an error status</exception>
         /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(Exception ex, ExceptionPostOptions options = null)
         {
@@ -175,9 +175,9 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="minidumpFileInfo">The minidump file that will be posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <returns>BugSplat's successful response</returns>
         /// <exception cref="ArgumentNullException"><paramref name="minidumpFileInfo"/> is null</exception>
-        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network, or BugSplat answered with an error status</exception>
         /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(FileInfo minidumpFileInfo, MinidumpPostOptions options = null)
         {
@@ -204,9 +204,9 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="xmlFileInfo">The XML file that will be posted to BugSplat</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <returns>BugSplat's successful response</returns>
         /// <exception cref="ArgumentNullException"><paramref name="xmlFileInfo"/> is null</exception>
-        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network, or BugSplat answered with an error status</exception>
         /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(FileInfo xmlFileInfo, XmlPostOptions options = null)
         {
@@ -233,9 +233,9 @@ namespace BugSplatDotNetStandard
         /// </summary>
         /// <param name="crashFileInfo">The report file that will be posted to BugSplat, can be a minidump or XML report</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <returns>BugSplat's successful response</returns>
         /// <exception cref="ArgumentNullException"><paramref name="crashFileInfo"/> is null</exception>
-        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network, or BugSplat answered with an error status</exception>
         /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> Post(FileInfo crashFileInfo, BugSplatPostOptions options = null)
         {
@@ -263,9 +263,9 @@ namespace BugSplatDotNetStandard
         /// <param name="title">The feedback title, used as the stack key for grouping</param>
         /// <param name="description">Additional feedback context</param>
         /// <param name="options">Optional parameters that will override the defaults if provided</param>
-        /// <returns>BugSplat's response. Check its status code: an error status is returned, not thrown</returns>
+        /// <returns>BugSplat's successful response</returns>
         /// <exception cref="ArgumentException"><paramref name="title"/> is null, empty, or only white space</exception>
-        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network</exception>
+        /// <exception cref="System.Net.Http.HttpRequestException">The request couldn't be sent, for example with no network, or BugSplat answered with an error status</exception>
         /// <exception cref="System.Threading.Tasks.TaskCanceledException">The request timed out</exception>
         public async Task<HttpResponseMessage> PostFeedback(string title, string description = "", FeedbackPostOptions options = null)
         {
