@@ -16,8 +16,9 @@
     <RepositoryType>git</RepositoryType>
     <Version>5.0.0.0</Version>
     <PackageReleaseNotes>
+      * Breaking: Post and PostFeedback throw instead of returning null: ArgumentException or ArgumentNullException for invalid arguments, HttpRequestException when the request can't be sent or BugSplat returns an error status, and TaskCanceledException on a timeout
       * Breaking: JsonObject is now internal and its GetValue method has been removed
-      * Better handling for large attachments
+      * A missing JSON key no longer throws and catches a NullReferenceException on every successful post
     </PackageReleaseNotes>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
